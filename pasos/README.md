@@ -13,6 +13,8 @@ Bitácora de construcción del sistema demo "delivery de comidas" (ficticio). Ha
 
 ## Leyenda de etiquetas
 
+Explicación completa de cada etiqueta, con dónde se aplica en el proyecto: [glosario.md](glosario.md).
+
 | Etiqueta | Significado |
 |---|---|
 | 📘 **ISTQB** | Término o técnica del syllabus ISTQB CTFL v4.0. |

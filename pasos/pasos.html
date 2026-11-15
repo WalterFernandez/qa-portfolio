@@ -89,6 +89,28 @@
   .steps-idx a { color: var(--accent); }
   .counter { display: none; }
 
+  /* Etiquetas clicables y modal de información */
+  .tag[data-info] { cursor: pointer; }
+  .tag[data-info]:hover { filter: brightness(.95); text-decoration: underline; }
+  .tag[data-info]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.card { text-align: left; font: inherit; color: inherit; border: 1px solid transparent; cursor: pointer; width: 100%; }
+  button.card:hover { border-color: var(--accent); }
+  button.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .more { display: block; margin-top: 8px; color: var(--accent); font-size: 13px; font-weight: 600; }
+  dialog.info { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid var(--border);
+    border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  dialog.info::backdrop { background: rgba(10, 14, 20, .55); }
+  .info-head { position: sticky; top: 0; display: flex; align-items: center; gap: 10px; padding: 14px 20px;
+    background: var(--surface); border-bottom: 1px solid var(--border); }
+  .info-head h2 { margin: 0; font-size: 19px; margin-right: auto; }
+  .info-body { padding: 4px 20px 20px; font-size: 15px; }
+  .info-body h3 { margin: 18px 0 6px; font-size: 15px; }
+  .info-body ul ul { margin: 2px 0 6px; }
+  .info-body .ref { color: var(--muted); font-size: 13px; }
+  .info-sec[hidden] { display: none; }
+  .here { background: var(--surface-2); border-radius: 8px; padding: 10px 14px; margin-top: 14px; }
+  .here h3 { margin-top: 0; }
+
   /* Modo presentación */
   body.present { overflow: hidden; }
   body.present main { max-width: none; padding: 0; margin: 0; }
@@ -140,10 +162,11 @@
   <div class="kicker">Cómo leer esto</div>
   <h2>Leyenda e índice</h2>
   <div class="grid">
-    <div class="card"><h4><span class="tag istqb">📘 ISTQB</span></h4><p>Término o técnica del syllabus ISTQB CTFL v4.0.</p></div>
-    <div class="card"><h4><span class="tag norma">📐 Norma</span></h4><p>Estándar formal publicado: ISO/IEC, RFC de la IETF, OpenAPI.</p></div>
-    <div class="card"><h4><span class="tag bp">✅ Buena práctica</span></h4><p>Convención de la industria muy aceptada, pero no es una norma formal.</p></div>
+    <button class="card" data-open="istqb"><h4><span class="tag istqb">📘 ISTQB</span></h4><p>Término o técnica del syllabus ISTQB CTFL v4.0.</p><span class="more">Ver más →</span></button>
+    <button class="card" data-open="norma"><h4><span class="tag norma">📐 Norma</span></h4><p>Estándar formal publicado: ISO/IEC, RFC de la IETF, OpenAPI.</p><span class="more">Ver más →</span></button>
+    <button class="card" data-open="bp"><h4><span class="tag bp">✅ Buena práctica</span></h4><p>Convención de la industria muy aceptada, pero no es una norma formal.</p><span class="more">Ver más →</span></button>
   </div>
+  <p class="muted">Tip: cualquier etiqueta de las tablas también se puede tocar para abrir su explicación.</p>
   <h3>Pasos</h3>
   <div class="tbl steps-idx"><table>
     <tr><th>Paso</th><th>Tema</th><th>Commit</th></tr>
@@ -369,6 +392,147 @@
 
 </main>
 
+<dialog class="info" id="info" aria-labelledby="info-title">
+  <div class="info-head">
+    <h2 id="info-title">Glosario</h2>
+    <button class="btn" id="info-close" aria-label="Cerrar">✕ Cerrar</button>
+  </div>
+  <div class="info-body">
+
+    <!-- ISTQB -->
+    <section class="info-sec" data-sec="istqb" data-title="📘 ISTQB CTFL v4.0">
+      <p><strong>ISTQB</strong> (International Software Testing Qualifications Board) publica el <strong>syllabus CTFL v4.0</strong> (Certified Tester Foundation Level, nivel básico, 2023). Es el vocabulario común del testing: cuando una práctica de este proyecto lleva la etiqueta 📘, usa un término o técnica de ese syllabus.</p>
+
+      <h3>Cómo está organizado el syllabus</h3>
+      <ul>
+        <li><strong>Cap. 1 — Fundamentos de las pruebas:</strong> qué es probar, los 7 principios, base de pruebas (<em>test basis</em>), oráculo.</li>
+        <li><strong>Cap. 2 — Pruebas en el ciclo de vida:</strong> enfoques <em>test-first</em> como TDD, ATDD y BDD (§2.1.3), <em>shift-left</em> (§2.1.5), niveles y tipos de prueba, pruebas de confirmación y regresión (§2.2.3).</li>
+        <li><strong>Cap. 3 — Pruebas estáticas:</strong> revisiones y análisis sin ejecutar el software.</li>
+        <li><strong>Cap. 4 — Análisis y diseño de pruebas:</strong> las técnicas, detalladas abajo.</li>
+        <li><strong>Cap. 5 — Gestión de las pruebas:</strong> planificación y criterios de entrada/salida, pruebas basadas en riesgos (§5.2), monitoreo, gestión de la configuración (§5.4), gestión de defectos (§5.5).</li>
+        <li><strong>Cap. 6 — Herramientas de prueba.</strong></li>
+      </ul>
+
+      <h3>Técnicas del Capítulo 4</h3>
+      <ul>
+        <li><strong>Caja negra</strong> (§4.2): miran entradas y salidas, sin conocer el código.
+          <ul>
+            <li>Partición de equivalencia (<em>Equivalence Partitioning</em>)</li>
+            <li>Análisis de valores límite (<em>Boundary Value Analysis</em>), en sus variantes de 2 y de 3 valores</li>
+            <li>Tablas de decisión (<em>Decision Table Testing</em>)</li>
+            <li>Transición de estados (<em>State Transition Testing</em>)</li>
+          </ul></li>
+        <li><strong>Caja blanca</strong> (§4.3): se basan en la estructura interna del código.
+          <ul>
+            <li>Pruebas y cobertura de sentencias (<em>Statement Testing</em>)</li>
+            <li>Pruebas y cobertura de ramas (<em>Branch Testing</em>), lo que en versiones anteriores se llamaba cobertura de decisión</li>
+          </ul></li>
+        <li><strong>Basadas en la experiencia</strong> (§4.4): aprovechan el conocimiento y la intuición del tester.
+          <ul>
+            <li>Predicción de errores (<em>Error Guessing</em>)</li>
+            <li>Pruebas exploratorias (<em>Exploratory Testing</em>)</li>
+            <li>Pruebas basadas en listas de comprobación (<em>Checklist-based Testing</em>)</li>
+          </ul></li>
+        <li><strong>Basadas en la colaboración</strong> (§4.5), novedad de la v4.0: testers, desarrollo y negocio trabajan juntos.
+          <ul>
+            <li>Escritura colaborativa de historias de usuario</li>
+            <li>Criterios de aceptación, por ejemplo en formato <em>Given-When-Then</em> (estilo Gherkin)</li>
+            <li>Desarrollo guiado por pruebas de aceptación (ATDD)</li>
+          </ul></li>
+      </ul>
+
+      <div class="here">
+        <h3>Dónde lo aplicamos en este proyecto</h3>
+        <ul>
+          <li>TDD y <em>shift-left</em>: pasos 1 y 2, el test se escribe antes que el código.</li>
+          <li><em>Smoke test</em>: <code>GET /salud</code> (paso 1).</li>
+          <li>Gestión de la configuración: versiones fijas y <code>.gitignore</code> (paso 1).</li>
+          <li>Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2).</li>
+          <li>Próximamente: transición de estados (paso 3), valores límite y particiones (paso 5), defectos sembrados (paso 8).</li>
+        </ul>
+      </div>
+      <p class="ref">Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.</p>
+    </section>
+
+    <!-- NORMA -->
+    <section class="info-sec" data-sec="norma" data-title="📐 Norma">
+      <p>Una <strong>norma</strong> es un documento formal, publicado por un organismo reconocido, que fija reglas o especificaciones. En software garantiza que los sistemas se construyan, prueben y comuniquen de forma compatible, segura y verificable.</p>
+
+      <h3>Organismos y ejemplos</h3>
+      <ul>
+        <li><strong>ISO/IEC</strong> (Organización Internacional de Normalización y Comisión Electrotécnica Internacional): estándares globales de calidad, procesos y seguridad.
+          <ul>
+            <li><strong>ISO/IEC/IEEE 29119:</strong> procesos, documentación y técnicas de prueba de software. El syllabus ISTQB la toma como referencia, por ejemplo para la documentación de pruebas.</li>
+            <li><strong>ISO/IEC 25010:</strong> modelo de calidad del producto de software, con características como adecuación funcional, eficiencia de desempeño, compatibilidad, fiabilidad, seguridad y mantenibilidad.</li>
+            <li><strong>ISO/IEC 9075:</strong> el lenguaje SQL.</li>
+          </ul></li>
+        <li><strong>RFC de la IETF</strong> (Internet Engineering Task Force): documentos técnicos que definen los protocolos de internet.
+          <ul>
+            <li><strong>RFC 9110:</strong> semántica de HTTP (métodos, códigos de estado como 404, 409 y 422).</li>
+            <li><strong>RFC 8259:</strong> el formato JSON.</li>
+            <li><strong>RFC 6749:</strong> el marco de autorización OAuth 2.0.</li>
+          </ul></li>
+        <li><strong>OpenAPI Initiative</strong> (bajo la Linux Foundation):
+          <ul>
+            <li><strong>OpenAPI Specification 3.1:</strong> describe una API REST (rutas, parámetros, respuestas) en YAML o JSON, para que humanos y máquinas la entiendan sin ver el código. FastAPI la genera sola en <code>/docs</code>.</li>
+          </ul></li>
+      </ul>
+
+      <h3>Relación con ISTQB</h3>
+      <ul>
+        <li><strong>Base de pruebas (<em>test basis</em>):</strong> una norma o especificación indica <em>qué</em> hay que verificar.</li>
+        <li><strong>Oráculo de pruebas:</strong> una RFC o un contrato OpenAPI es la fuente de verdad para decidir si una respuesta es correcta.</li>
+        <li><strong>Pruebas estáticas</strong> (Cap. 3): se puede revisar el código, la arquitectura o el contrato de la API contra la norma antes de ejecutar nada.</li>
+      </ul>
+
+      <div class="here">
+        <h3>Dónde lo aplicamos en este proyecto</h3>
+        <ul>
+          <li>ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2).</li>
+          <li>RFC 9110: <code>GET</code> solo lee (paso 2). Próximamente: códigos 404, 409 y 422.</li>
+          <li>OpenAPI 3.1: documentación automática en <code>/docs</code> (paso 1). En la etapa 2, contrato JSON Schema.</li>
+          <li>ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- BUENA PRÁCTICA -->
+    <section class="info-sec" data-sec="bp" data-title="✅ Buena práctica">
+      <p>Una <strong>buena práctica</strong> es una forma de trabajar que la industria adoptó porque probó que reduce errores y facilita el mantenimiento. A diferencia de una norma, <strong>nadie la "publica" como obligatoria</strong>: la sostienen comunidades, guías abiertas o autores de referencia.</p>
+
+      <h3>Norma vs. buena práctica</h3>
+      <div class="tbl"><table>
+        <tr><th></th><th>📐 Norma</th><th>✅ Buena práctica</th></tr>
+        <tr><td>Quién la define</td><td>Organismo formal (ISO, IETF…)</td><td>Comunidad, guía abierta, autor reconocido</td></tr>
+        <tr><td>Cómo cambia</td><td>Versiones oficiales y procesos de revisión</td><td>Evoluciona con el uso</td></tr>
+        <tr><td>Ejemplo</td><td>RFC 9110 dice qué significa un 409</td><td>OWASP recomienda consultas parametrizadas</td></tr>
+      </table></div>
+
+      <h3>Fuentes que usamos</h3>
+      <ul>
+        <li><strong>The Twelve-Factor App:</strong> 12 reglas para aplicaciones de servicio (por ejemplo, la configuración va en variables de entorno).</li>
+        <li><strong>OWASP Cheat Sheets:</strong> guías abiertas de seguridad (por ejemplo, prevenir la inyección SQL).</li>
+        <li><strong>Conventional Commits 1.0:</strong> formato de mensajes de commit (<code>feat(…)</code>, <code>docs(…)</code>).</li>
+        <li><strong>PEP</strong> (Python Enhancement Proposals): convenciones de Python, como PEP 8 (estilo) y PEP 405 (entornos virtuales).</li>
+        <li><strong>Patrones de diseño:</strong> <em>Application Factory</em>, <em>Unit of Work</em>, inyección de dependencias.</li>
+        <li><strong>Principios FIRST</strong> de los tests unitarios: <em>Fast, Independent, Repeatable, Self-validating, Timely</em>.</li>
+      </ul>
+
+      <h3>Relación con ISTQB</h3>
+      <p>El syllabus no impone herramientas ni patrones de código, pero muchas buenas prácticas sostienen sus objetivos: tests independientes y repetibles hacen confiable la regresión (§2.2.3), y versionar bien es parte de la gestión de la configuración (§5.4).</p>
+
+      <div class="here">
+        <h3>Dónde lo aplicamos en este proyecto</h3>
+        <ul>
+          <li>Paso 1: Twelve-Factor (configuración), Application Factory, FIRST, Conventional Commits, PEP 405.</li>
+          <li>Paso 2: OWASP (SQL parametrizado), 3FN, Unit of Work, inyección de dependencias, siembra idempotente, dinero en enteros.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+</dialog>
+
 <script>
   const slides = [...document.querySelectorAll('.slide')];
   const counter = document.getElementById('counter');
@@ -404,6 +568,7 @@
   document.getElementById('next').onclick = () => show(i + 1);
 
   document.addEventListener('keydown', e => {
+    if (document.getElementById('info').open) return;  // el modal maneja sus propias teclas (Esc lo cierra)
     if (!document.body.classList.contains('present')) {
       if (e.key === 'p' || e.key === 'P') setPresent(true);
       return;
@@ -417,6 +582,35 @@
   document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement && document.body.classList.contains('present')) setPresent(false);
   });
+
+  // Modal de información por etiqueta
+  const info = document.getElementById('info');
+  const infoTitle = document.getElementById('info-title');
+  const kinds = { istqb: 'istqb', norma: 'norma', bp: 'bp' };
+  function openInfo(kind) {
+    info.querySelectorAll('.info-sec').forEach(s => {
+      const on = s.dataset.sec === kind;
+      s.hidden = !on;
+      if (on) infoTitle.textContent = s.dataset.title;
+    });
+    if (!info.open) info.showModal();
+    info.querySelector('.info-body').scrollTop = 0;
+    info.scrollTop = 0;
+  }
+  document.querySelectorAll('.tag').forEach(t => {
+    const kind = Object.keys(kinds).find(k => t.classList.contains(k));
+    if (!kind || t.closest('dialog')) return;
+    t.dataset.info = kind;
+    if (t.closest('button')) return;  // dentro de una tarjeta: la tarjeta ya abre el modal
+    t.tabIndex = 0;
+    t.setAttribute('role', 'button');
+    t.title = 'Ver qué significa';
+    t.addEventListener('click', () => openInfo(kind));
+    t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInfo(kind); } });
+  });
+  document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openInfo(b.dataset.open)));
+  document.getElementById('info-close').onclick = () => info.close();
+  info.addEventListener('click', e => { if (e.target === info) info.close(); });  // clic en el fondo
 
   // Tema claro/oscuro (preferencia guardada solo en este navegador)
   const root = document.documentElement;

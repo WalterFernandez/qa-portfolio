@@ -13,6 +13,9 @@ router = APIRouter()
 TELEFONO = r"^\+?\d{8,15}$"
 # Sin espacios en los extremos: empieza y termina con un caracter visible.
 SIN_ESPACIOS_EN_EXTREMOS = r"^\S(?:.*\S)?$"
+# Firma: PNG en data URL con al menos un caracter base64 después del prefijo.
+FIRMA_PNG = r"^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$"
+FIRMA_MAX = 200_000
 
 
 class NuevoPedido(BaseModel):
@@ -36,6 +39,11 @@ class DatosPedido(BaseModel):
     ]
     lat: Annotated[float, Field(ge=-90, le=90)] | None = None
     lng: Annotated[float, Field(ge=-180, le=180)] | None = None
+
+
+class Firma(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    imagen: Annotated[str, Field(max_length=FIRMA_MAX, pattern=FIRMA_PNG)]
 
 
 @router.post("/pedidos", status_code=201, tags=["pedidos"])
@@ -64,6 +72,19 @@ def cargar_datos(pedido_id: int, body: DatosPedido, ctx: Ctx = Depends(obtener_c
         body.lat,
         body.lng,
     )
+    return pedidos.obtener_pedido(ctx, pedido_id)
+
+
+@router.post("/pedidos/{pedido_id}/firma", tags=["pedidos"])
+def firmar(pedido_id: int, body: Firma, ctx: Ctx = Depends(obtener_ctx)) -> dict:
+    pedidos.firmar(ctx, pedido_id, body.imagen)
+    return pedidos.obtener_pedido(ctx, pedido_id)
+
+
+@router.post("/pedidos/{pedido_id}/pago", tags=["pedidos"])
+def pagar(pedido_id: int, ctx: Ctx = Depends(obtener_ctx)) -> dict:
+    """Idempotente: pagar dos veces responde 200 con el mismo pedido."""
+    pedidos.pagar(ctx, pedido_id)
     return pedidos.obtener_pedido(ctx, pedido_id)
 
 

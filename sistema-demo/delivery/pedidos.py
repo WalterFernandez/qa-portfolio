@@ -6,7 +6,7 @@ máquina de estados y deja un evento con su marca de tiempo.
 
 from delivery import catalogo, mensajes, reloj
 from delivery.db import Ctx
-from delivery.estados import Estado, validar_transicion
+from delivery.estados import CANCELABLES, Estado, validar_transicion
 
 
 class PedidoNoEncontrado(Exception):
@@ -21,6 +21,15 @@ class DatosInvalidos(Exception):
     def __init__(self, error: str) -> None:
         super().__init__(error)
         self.error = error
+
+
+class FirmaRequerida(Exception):
+    """Pagar exige firma previa (Paso 6)."""
+
+
+# Estados en los que el pago ya ocurrió: pagar de nuevo no hace nada (idempotencia).
+# Son todos menos los previos al pago y CANCELADO (un cancelado no se paga: 409).
+YA_PAGADOS: frozenset[Estado] = frozenset(Estado) - CANCELABLES - {Estado.CANCELADO}
 
 
 DEMORA_BASE_MIN = 30
@@ -118,6 +127,42 @@ def cargar_datos(
         f"Total ${total} - demora {demora_min} min", None,
     )
     _avanzar(ctx, pedido_id, Estado.COTIZADO, "servicio")
+
+
+def firmar(ctx: Ctx, pedido_id: int, imagen: str) -> None:
+    """Paso 6, primera mitad: el cliente firma. No cambia de estado.
+
+    Se puede firmar solo donde el próximo paso es pagar (COTIZADO); por eso se
+    valida la transición a PAGADO. Volver a firmar antes de pagar reemplaza la firma.
+    El formato de `imagen` ya lo validó la ruta.
+    """
+    validar_transicion(Estado(_fila(ctx, pedido_id)["estado"]), Estado.PAGADO)
+    ctx.con.execute(
+        "UPDATE pedidos SET firmado = 1, firma = ? WHERE id = ?", (imagen, pedido_id)
+    )
+
+
+def pagar(ctx: Ctx, pedido_id: int) -> None:
+    """Paso 6 (el cliente paga) y paso 7 (el servicio asigna el delivery), en la misma llamada.
+
+    Idempotente: si el pedido ya está pagado (o más adelante), no hace nada. Así un
+    doble clic en "Pagar" no duplica el evento PAGADO ni el mensaje al delivery.
+    """
+    fila = _fila(ctx, pedido_id)
+    actual = Estado(fila["estado"])
+    if actual in YA_PAGADOS:
+        return
+    validar_transicion(actual, Estado.PAGADO)  # primero el estado, después la firma
+    if not fila["firmado"]:
+        raise FirmaRequerida()
+
+    _avanzar(ctx, pedido_id, Estado.PAGADO, "cliente")
+    link = f"/delivery/pedido/{pedido_id}"
+    mensajes.enviar(
+        ctx, pedido_id, "delivery", ctx.cfg.delivery_telefono,
+        f"Nuevo pedido #{pedido_id}: retirar y entregar en {fila['direccion']}", link,
+    )
+    _avanzar(ctx, pedido_id, Estado.ASIGNADO, "servicio")
 
 
 def _items(ctx: Ctx, pedido_id: int) -> list[dict]:

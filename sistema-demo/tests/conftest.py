@@ -33,3 +33,14 @@ DATOS_OK = {
 def pedido_nuevo(cliente) -> int:
     """Id de un pedido recién creado, en LINK_ENVIADO (listo para cargar datos)."""
     return cliente.post("/pedidos", json={"telefono": "1122334455"}).json()["id"]
+
+
+# Firma mínima válida (Paso 6): un PNG en data URL. El contenido no importa.
+FIRMA_OK = "data:image/png;base64,iVBORw0KGgo="
+
+
+@pytest.fixture
+def pedido_cotizado(cliente, pedido_nuevo) -> int:
+    """Id de un pedido en COTIZADO (listo para firmar y pagar)."""
+    cliente.put(f"/pedidos/{pedido_nuevo}", json=DATOS_OK)
+    return pedido_nuevo

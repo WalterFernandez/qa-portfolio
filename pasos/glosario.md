@@ -41,14 +41,15 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 a 5, el test se escribe antes que el código.
+- TDD y *shift-left*: pasos 1 a 6, el test se escribe antes que el código.
 - *Smoke test*: `GET /salud` (paso 1).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
-- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5).
-- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5).
+- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5); un doble clic en “Pagar” no cobra dos veces (paso 6).
+- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5); el pago recorre `COTIZADO → PAGADO → ASIGNADO` y firmar o pagar fuera de `COTIZADO` da 409 (paso 6).
 - Prueba de componente (nivel unitario, sin HTTP ni base): paso 3.
-- Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): pasos 4 y 5.
-- Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5).
+- Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): pasos 4 a 6.
+- Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5); formato y largo de la firma (paso 6).
+- Tabla de decisión: estado × firma para el pago (paso 6).
 - Próximamente: defectos sembrados (paso 8).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
@@ -80,12 +81,13 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 
 ### Dónde lo aplicamos en este proyecto
 
-- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (paso 5).
+- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 y 6).
 - UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
-- RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5).
+- RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5); 409 `firma_requerida` y `POST /pago` idempotente aunque la norma no lo exija (paso 6).
 - ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4).
 - ITU-T E.164: máximo de 15 dígitos en el teléfono (paso 4).
 - ISO 6709: latitud en [-90, 90] y longitud en [-180, 180] (paso 5).
+- RFC 2397 y RFC 4648: la firma como *data URL* PNG en base64 (paso 6).
 - OpenAPI 3.1: documentación automática en `/docs` (paso 1). En la etapa 2, contrato JSON Schema.
 - ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).
 
@@ -123,6 +125,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 3: fuente única de verdad y diseño *table-driven*, tests parametrizados, *fail fast*, prueba de mutación manual.
 - Paso 4: validación de entrada por lista blanca (OWASP), un solo camino para cambiar el estado, doble de prueba (*fake*) para el WhatsApp, reloj reemplazable, prueba de mutación (3 de 3).
 - Paso 5: el total lo calcula el servidor con el catálogo (fuente única), lista blanca contra `total`, dinero en enteros, validar todo antes de escribir (*fail fast*) en una sola transacción, prueba de mutación (6 de 6, con un caso sumado por una sobreviviente).
+- Paso 6: pago idempotente, firma por lista blanca, migración de esquema aditiva, pago y asignación en una sola transacción, primero el estado y después la firma (*fail fast*), prueba de mutación (12 de 12).
 
 ---
 
@@ -148,6 +151,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - [Paso 3](paso-03-maquina-de-estados.md): `test_estados.py` falló porque no existía `delivery.estados`; después se escribió la máquina de estados.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 41 tests de cotización escritos antes que `cargar_datos`: fallaron con 405 porque la ruta `PUT` no existía.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 32 tests de firma y pago fallaron con 404 (no existían las rutas) antes de escribir `firmar` y `pagar`.
 
 <a id="smoke-test"></a>
 
@@ -210,6 +214,7 @@ Priorizar qué probar según la probabilidad y el impacto de que algo salga mal.
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Riesgo: cobro incorrecto. Mitigación: el precio lo fija el servidor y se guarda en enteros.
 - [Paso 3](paso-03-maquina-de-estados.md): Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente; repetirlo responde lo mismo sin un segundo `PAGADO`.
 
 <a id="regresion"></a>
 
@@ -236,6 +241,7 @@ Técnica de caja negra: se modela el sistema como estados y transiciones (diagra
 - [Paso 3](paso-03-maquina-de-estados.md): Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…).
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Al crear el pedido se recorre `INICIADO → LINK_ENVIADO` por `_avanzar`; un salto a `PAGADO` se rechaza y no deja evento.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): La carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO`; cargar dos veces choca con `COTIZADO` y da 409.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): El pago recorre `COTIZADO → PAGADO → ASIGNADO`; firmar o pagar fuera de `COTIZADO` da 409, y pagar un pedido `CANCELADO` también.
 
 <a id="cobertura-transiciones"></a>
 
@@ -273,6 +279,7 @@ Técnica de caja negra: se dividen los datos en grupos que el sistema debería t
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono: un grupo válido (8 a 15 dígitos, con `+` opcional) y grupos inválidos (vacío, con letras, muy corto, muy largo).
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cantidad (menor a 1, de 1 a 10, mayor a 10), cantidad de items (0, 1 a 4, más de 4), dirección (vacía, con espacios en los extremos, válida, demasiado larga) y la demora en tres tramos: hasta 2 unidades, de 3 a 7 y de 8 en adelante.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): La firma en clases: PNG válido, otro formato (`jpeg`), sin prefijo, prefijo sin datos y caracteres fuera de base64.
 
 <a id="valores-limite"></a>
 
@@ -286,6 +293,7 @@ Los defectos se concentran en los bordes de cada partición. Con 2 valores por b
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Bordes del teléfono: 8 y 15 dígitos dan 201; 7 y 16 dan 422.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cantidad 0, 1, 10 y 11; items 0, 1, 4 y 5; dirección de 1, 200 y 201 caracteres; latitud ±90 y ±90,1; longitud ±180 y ±180,1; demora en 2|3 unidades (empieza el recargo) y 7|8 (llega al tope de 60).
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Largo de la firma: 200 000 caracteres pasa y 200 001 da 422.
 
 <a id="integracion-componentes"></a>
 
@@ -299,6 +307,19 @@ Segundo nivel de prueba: se verifica que varias piezas funcionen juntas a travé
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Con `TestClient` cada test cruza ruta → servicio → SQLite → bandeja de mensajes, sin levantar un servidor real.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `PUT /pedidos/{id}` prueba juntos el modelo Pydantic, el servicio, el catálogo, SQLite y la bandeja de mensajes.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Ruta, servicio, SQLite y bandeja juntos: el pago deja dos eventos y el WhatsApp al delivery en la misma llamada.
+
+<a id="tabla-decision"></a>
+
+#### Prueba de tabla de decisión
+
+📘 ISTQB · **Referencia:** CTFL v4.0 §4.2.3 Prueba de tabla de decisión
+
+Se listan las condiciones (por ejemplo, estado y firma) y para cada combinación se fija el resultado esperado. Cada combinación es al menos un caso de prueba. Sirve cuando la respuesta depende de varias condiciones a la vez.
+
+**En este proyecto:**
+
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): El pago: estado (antes de cotizar, `COTIZADO`, pagado o posterior, `CANCELADO`) × firma (sí o no) → 409 `transicion_invalida`, 409 `firma_requerida`, 200 con asignación o 200 sin cambios.
 
 ### 📐 Normas
 
@@ -350,6 +371,7 @@ El sistema impide modificaciones indebidas de los datos.
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Restricciones en la base: `CHECK (precio > 0)`, `FOREIGN KEY` y `PRIMARY KEY (pedido_id, plato_id)`.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Un 422 o un 409 no dejan nada a medias: se valida todo antes de escribir, y la PK `(pedido_id, plato_id)` nunca llega a dar un error 500.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Un pago rechazado no deja eventos ni mensajes, y una firma rechazada no marca el pedido como firmado.
 
 <a id="recuperabilidad"></a>
 
@@ -425,6 +447,7 @@ El pedido no se puede completar porque choca con el estado actual del recurso.
 - [Paso 3](paso-03-maquina-de-estados.md): `TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): El manejador de `main.py` traduce `TransicionInvalida` en 409 con `estado_actual` y `destino`; un test lo verifica.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cargar datos de un pedido ya cotizado: `estado_actual` `COTIZADO`, `destino` `DATOS_CARGADOS`.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Pagar sin firma → 409 `firma_requerida`; firmar o pagar fuera de `COTIZADO` → 409 `transicion_invalida`.
 
 <a id="http-404"></a>
 
@@ -437,6 +460,7 @@ El recurso pedido no existe en el servidor.
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `GET /pedidos/999` responde 404 con `{"error": "pedido_no_encontrado"}`, nunca un 500.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): `POST /firma` y `POST /pago` sobre el pedido 999 → 404 `pedido_no_encontrado`.
 
 <a id="http-422"></a>
 
@@ -450,6 +474,7 @@ El cuerpo tiene un formato válido (JSON) pero su contenido no se puede procesar
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono fuera de patrón, campos de más o un `destino` desconocido en `/mensajes` responden 422.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Body fuera de rango o con campos de más, y dos reglas que necesitan el catálogo: `plato_inexistente` y `plato_repetido`.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Firma que no es un PNG en base64, de más de 200 000 caracteres o con campos de más → 422.
 
 <a id="iso8601"></a>
 
@@ -486,6 +511,30 @@ Representación estándar de un punto geográfico: latitud entre -90 y 90 grados
 **En este proyecto:**
 
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `lat` en [-90, 90] y `lng` en [-180, 180]; los bordes son válidos y ±0,1 más allá da 422.
+
+<a id="metodos-idempotentes"></a>
+
+#### RFC 9110: métodos idempotentes
+
+📐 Norma · **Referencia:** IETF RFC 9110 §9.2.2 Idempotent Methods
+
+Un método es idempotente si repetir la misma petición tiene el mismo efecto que hacerla una vez. `PUT`, `DELETE` y los métodos seguros lo son por definición; `POST` no, así que si hace falta lo tiene que garantizar el servidor.
+
+**En este proyecto:**
+
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): `POST /pago` no es idempotente por norma: el servidor lo hace idempotente a propósito, para que un reintento (doble clic, red que se corta) no pague dos veces.
+
+<a id="data-url"></a>
+
+#### RFC 2397 y RFC 4648: data URL y base64
+
+📐 Norma · **Referencia:** IETF RFC 2397 (esquema data:); IETF RFC 4648 (base64)
+
+Una *data URL* lleva el contenido de un archivo dentro del texto: `data:<tipo>;base64,<datos>`. RFC 4648 fija el alfabeto base64: letras, dígitos, `+`, `/` y hasta dos `=` de relleno al final.
+
+**En este proyecto:**
+
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): La firma llega como `data:image/png;base64,...`, que es lo que entrega un `<canvas>` del navegador (Paso 9). El patrón solo acepta el alfabeto base64.
 
 ### ✅ Buenas prácticas
 
@@ -586,6 +635,7 @@ Todos los cambios de una operación se guardan juntos o no se guarda ninguno.
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): `obtener_ctx` abre una conexión por request: *commit* si todo sale bien, *rollback* si algo falla.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): La carga escribe items, dirección, total, dos eventos y un mensaje en una sola transacción.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): `PAGADO`, el mensaje al delivery y `ASIGNADO` se confirman juntos o no se confirma nada.
 
 <a id="inyeccion-dependencias"></a>
 
@@ -601,7 +651,7 @@ Una función recibe lo que necesita desde afuera en vez de crearlo ella misma. F
 
 <a id="idempotencia"></a>
 
-#### Inicialización idempotente
+#### Operaciones idempotentes
 
 ✅ Buena práctica · **Referencia:** Idempotencia
 
@@ -610,6 +660,7 @@ Una operación idempotente puede repetirse muchas veces con el mismo resultado q
 **En este proyecto:**
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery.
 
 <a id="dinero-enteros"></a>
 
@@ -651,6 +702,7 @@ Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un c
 - [Paso 3](paso-03-maquina-de-estados.md): Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.
 
 <a id="fail-fast"></a>
 
@@ -665,6 +717,7 @@ Ante una operación inválida, fallar enseguida con un error que diga qué pasó
 - [Paso 3](paso-03-maquina-de-estados.md): `TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `PedidoNoEncontrado` y `TransicionInvalida` se traducen a HTTP en un solo lugar (`main.py`), nunca un 500.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `cargar_datos` valida estado, repetidos y platos antes del primer `INSERT`; cada rechazo trae su código (`plato_repetido`, `plato_inexistente`).
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): El pago chequea primero el estado y después la firma: un pedido sin cotizar da `transicion_invalida`, no `firma_requerida`.
 
 <a id="mutacion"></a>
 
@@ -679,6 +732,7 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 - [Paso 3](paso-03-maquina-de-estados.md): Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): 3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): 12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados.
 
 <a id="validacion-entrada"></a>
 
@@ -692,6 +746,7 @@ Aceptar solo lo que se sabe válido (lista blanca) y rechazar todo lo demás en 
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los modelos Pydantic usan `extra="forbid"`: un cliente que manda `"estado": "PAGADO"` al crear el pedido recibe 422.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `extra="forbid"` rechaza `total`, `estado` o `descuento`; la dirección tiene un patrón que no admite espacios en los extremos.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): La firma solo pasa con el patrón `^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$` y sin campos de más.
 
 <a id="doble-prueba"></a>
 
@@ -716,5 +771,17 @@ La hora actual sale de una sola función que los tests pueden reemplazar, así l
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `reloj.ahora_utc()` es la única fuente de "ahora"; en el Paso 8 los tests la fijan con `monkeypatch` para provocar el defecto de zona horaria.
+
+<a id="migracion-esquema"></a>
+
+#### Migraciones de esquema aditivas
+
+✅ Buena práctica · **Referencia:** Evolutionary Database Design (Sadalage y Fowler)
+
+El esquema de la base cambia en pasos chicos, sin perder datos. Una migración aditiva solo agrega (por ejemplo, una columna que admite nulos), así que las filas viejas siguen siendo válidas.
+
+**En este proyecto:**
+
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): `CREATE TABLE IF NOT EXISTS` no toca una tabla que ya existe: al arrancar, `db.py` revisa `PRAGMA table_info` y agrega `firma` si falta. Un test parte de una base sin esa columna.
 
 <!-- TERMINOS:FIN -->

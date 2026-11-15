@@ -239,7 +239,7 @@ def test_demora_tiene_tope_de_60(cliente, pedido_nuevo): ...  # 4 platos x 10 un
   - Rutas: `POST /pedidos/{id}/firma` body `{"imagen": str}`; `POST /pedidos/{id}/pago` sin body.
   - Fixture `pedido_cotizado` en `conftest.py`.
 
-- [ ] **Step 1: Tests que fallan**
+- [x] **Step 1: Tests que fallan**
 
 ```python
 def test_pagar_sin_firma_da_409(cliente, pedido_cotizado):
@@ -265,10 +265,10 @@ def test_firmar_antes_de_cotizar_da_409(cliente, pedido_nuevo): ...
 ```
 
   `FIRMA_OK = "data:image/png;base64,iVBORw0KGgo="` en `conftest.py`.
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar.
-- [ ] **Step 4:** Correr la suite → PASS.
-- [ ] **Step 5: Commit** `feat(demo): firma, pago idempotente y asignación al delivery`
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar.
+- [x] **Step 4:** Correr la suite → PASS.
+- [x] **Step 5: Commit** `feat(demo): firma, pago idempotente y asignación al delivery`
 
 ### Task 7: Recorrido del delivery, confirmaciones, cierre y cancelación (pasos 8–13)
 

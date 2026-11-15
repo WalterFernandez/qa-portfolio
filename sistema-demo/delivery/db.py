@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     total               INTEGER,
     demora_min          INTEGER,
     firmado             INTEGER NOT NULL DEFAULT 0,
+    firma               TEXT,
     recibido_cliente    INTEGER NOT NULL DEFAULT 0,
     entregado_delivery  INTEGER NOT NULL DEFAULT 0,
     cancelado_por       TEXT,
@@ -60,6 +61,12 @@ CREATE TABLE IF NOT EXISTS mensajes (
 );
 """
 
+# Columnas agregadas después de la primera versión del esquema. `CREATE TABLE IF NOT
+# EXISTS` no toca una tabla que ya existe, así que una base vieja se completa acá.
+COLUMNAS_NUEVAS = [
+    ("pedidos", "firma", "TEXT"),
+]
+
 # Precios en pesos enteros. Datos ficticios.
 PLATOS_SEMILLA = [
     ("Empanadas (docena)", 9000),
@@ -89,10 +96,18 @@ def inicializar(db_path: Path) -> None:
     try:
         with con:
             con.executescript(ESQUEMA)
+            _agregar_columnas_nuevas(con)
             if con.execute("SELECT COUNT(*) FROM platos").fetchone()[0] == 0:
                 con.executemany("INSERT INTO platos (nombre, precio) VALUES (?, ?)", PLATOS_SEMILLA)
     finally:
         con.close()
+
+
+def _agregar_columnas_nuevas(con: sqlite3.Connection) -> None:
+    for tabla, columna, tipo in COLUMNAS_NUEVAS:
+        existentes = {f["name"] for f in con.execute(f"PRAGMA table_info({tabla})")}
+        if columna not in existentes:
+            con.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}")
 
 
 def obtener_ctx(request: Request) -> Iterator[Ctx]:

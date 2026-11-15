@@ -45,19 +45,19 @@ variables de entorno ──► Config ──► crear_app(cfg) ──► app.sta
 
 | Qué | Tipo | Referencia |
 |---|---|---|
-| Escribir el test antes que el código | 📘 ISTQB | CTFL v4.0 §2.1.3 *Enfoques test-first* (TDD) |
-| Prueba rápida de "¿está vivo?" (`/salud`) | 📘 ISTQB | *Smoke test* (glosario ISTQB) |
-| Probar temprano, desde el primer commit | 📘 ISTQB | CTFL v4.0 §2.1.5 *Shift-left* |
-| Versiones fijas, `.gitignore`, commits identificables | 📘 ISTQB | CTFL v4.0 §5.4 *Gestión de la configuración* |
-| Activar defectos a propósito para validar las pruebas | 📘 ISTQB | *Defect seeding / bug seeding* (glosario ISTQB) |
-| Código fácil de probar (app por parámetro, base aislada) | 📐 Norma | ISO/IEC 25010 — Mantenibilidad › *Capacidad de ser probado* (testability) |
-| Documentación automática de la API en `/docs` | 📐 Norma | OpenAPI Specification 3.1 (FastAPI la genera sola) |
-| Respuestas JSON | 📐 Norma | RFC 8259 (formato JSON) |
-| Configuración fuera del código (variables de entorno) | ✅ Buena práctica | *The Twelve-Factor App*, factor III "Config" |
-| Fábrica de aplicación (`crear_app`) | ✅ Buena práctica | Patrón *Application Factory* |
-| Cada test con sus propios datos | ✅ Buena práctica | Principios **FIRST** de los tests unitarios (la "I" es *Independent*) |
-| Mensajes de commit `feat(demo): …` | ✅ Buena práctica | *Conventional Commits* 1.0 |
-| Entorno virtual (`.venv`) | ✅ Buena práctica | PEP 405 (entornos virtuales de Python) |
+| Escribir el test antes que el código | 📘 ISTQB | [CTFL v4.0 §2.1.3 *Enfoques test-first* (TDD)](glosario.md#tdd) |
+| Prueba rápida de "¿está vivo?" (`/salud`) | 📘 ISTQB | [*Smoke test* (glosario ISTQB)](glosario.md#smoke-test) |
+| Probar temprano, desde el primer commit | 📘 ISTQB | [CTFL v4.0 §2.1.5 *Shift-left*](glosario.md#shift-left) |
+| Versiones fijas, `.gitignore`, commits identificables | 📘 ISTQB | [CTFL v4.0 §5.4 *Gestión de la configuración*](glosario.md#gestion-configuracion) |
+| Activar defectos a propósito para validar las pruebas | 📘 ISTQB | [*Defect seeding / bug seeding* (glosario ISTQB)](glosario.md#defect-seeding) |
+| Código fácil de probar (app por parámetro, base aislada) | 📐 Norma | [ISO/IEC 25010 — Mantenibilidad › *Capacidad de ser probado* (testability)](glosario.md#capacidad-prueba) |
+| Documentación automática de la API en `/docs` | 📐 Norma | [OpenAPI Specification 3.1 (FastAPI la genera sola)](glosario.md#openapi) |
+| Respuestas JSON | 📐 Norma | [RFC 8259 (formato JSON)](glosario.md#json) |
+| Configuración fuera del código (variables de entorno) | ✅ Buena práctica | [*The Twelve-Factor App*, factor III "Config"](glosario.md#twelve-factor) |
+| Fábrica de aplicación (`crear_app`) | ✅ Buena práctica | [Patrón *Application Factory*](glosario.md#application-factory) |
+| Cada test con sus propios datos | ✅ Buena práctica | [Principios **FIRST** de los tests unitarios (la "I" es *Independent*)](glosario.md#first) |
+| Mensajes de commit `feat(demo): …` | ✅ Buena práctica | [*Conventional Commits* 1.0](glosario.md#conventional-commits) |
+| Entorno virtual (`.venv`) | ✅ Buena práctica | [PEP 405 (entornos virtuales de Python)](glosario.md#pep405) |
 
 ## 5. Cómo se verifica
 

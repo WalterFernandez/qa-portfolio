@@ -13,7 +13,9 @@ Bitácora de construcción del sistema demo "delivery de comidas" (ficticio). Ha
 
 ## Leyenda de etiquetas
 
-Explicación completa de cada etiqueta, con dónde se aplica en el proyecto: [glosario.md](glosario.md).
+Cada fila de las tablas de normas lleva a la **ficha de su concepto** (qué es, referencia exacta y en qué pasos se aplica): en `pasos.html` tocando la etiqueta, y en los `.md` con el enlace de la columna Referencia, que lleva a [glosario.md](glosario.md#fichas-por-concepto).
+
+**Cómo agregar conceptos en un paso nuevo:** sumar la ficha en [`terminos.json`](terminos.json) (y el id de cada fila en `filas`), y después correr `python pasos/generar_glosario.py`. El script actualiza `pasos.html`, `glosario.md` y los enlaces de los `paso-NN.md`, y se detiene con un error si algo no coincide.
 
 | Etiqueta | Significado |
 |---|---|

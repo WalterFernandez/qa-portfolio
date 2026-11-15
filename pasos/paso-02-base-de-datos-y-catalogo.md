@@ -55,19 +55,19 @@ crear_app(cfg) ──► db.inicializar(cfg.db_path)   crea tablas + siembra pla
 
 | Qué | Tipo | Referencia |
 |---|---|---|
-| Test escrito antes del código (rojo → verde) | 📘 ISTQB | CTFL v4.0 §2.1.3 *Enfoques test-first* (TDD) |
-| Precio decidido por el servidor, dinero sin `float` | 📘 ISTQB | CTFL v4.0 §5.2 *Pruebas basadas en riesgos* (riesgo de producto: cobro incorrecto) |
-| Reiniciar y verificar que no se duplica | 📘 ISTQB | Prueba de **re-ejecución/regresión** de la inicialización (CTFL v4.0 §2.2.3) |
-| Integridad de datos (CHECK, FOREIGN KEY, PRIMARY KEY) | 📐 Norma | ISO/IEC 25010 — Seguridad › *Integridad*; Fiabilidad |
-| Datos persistentes tras reinicio | 📐 Norma | ISO/IEC 25010 — Fiabilidad › *Capacidad de recuperación* |
-| Lenguaje SQL de las tablas | 📐 Norma | ISO/IEC 9075 (estándar SQL; SQLite implementa un subconjunto) |
-| `GET /platos` solo lee, no modifica | 📐 Norma | RFC 9110 §9.2.1 — métodos HTTP *seguros* (safe) |
-| Consultas parametrizadas (`?`) | ✅ Buena práctica | OWASP *SQL Injection Prevention Cheat Sheet* |
-| Tablas separadas, sin datos repetidos (`pedido_items`) | ✅ Buena práctica | Normalización relacional (3FN) |
-| Una transacción por request, commit/rollback | ✅ Buena práctica | Patrón *Unit of Work* |
-| Conexión entregada por `Depends` | ✅ Buena práctica | Inyección de dependencias (FastAPI) |
-| Siembra idempotente | ✅ Buena práctica | Inicialización idempotente (se puede repetir sin efectos extra) |
-| Montos en enteros | ✅ Buena práctica | Manejo de dinero en unidades enteras (evitar coma flotante binaria, IEEE 754) |
+| Test escrito antes del código (rojo → verde) | 📘 ISTQB | [CTFL v4.0 §2.1.3 *Enfoques test-first* (TDD)](glosario.md#tdd) |
+| Precio decidido por el servidor, dinero sin `float` | 📘 ISTQB | [CTFL v4.0 §5.2 *Pruebas basadas en riesgos* (riesgo de producto: cobro incorrecto)](glosario.md#riesgos) |
+| Reiniciar y verificar que no se duplica | 📘 ISTQB | [Prueba de **re-ejecución/regresión** de la inicialización (CTFL v4.0 §2.2.3)](glosario.md#regresion) |
+| Integridad de datos (CHECK, FOREIGN KEY, PRIMARY KEY) | 📐 Norma | [ISO/IEC 25010 — Seguridad › *Integridad*; Fiabilidad](glosario.md#integridad) |
+| Datos persistentes tras reinicio | 📐 Norma | [ISO/IEC 25010 — Fiabilidad › *Capacidad de recuperación*](glosario.md#recuperabilidad) |
+| Lenguaje SQL de las tablas | 📐 Norma | [ISO/IEC 9075 (estándar SQL; SQLite implementa un subconjunto)](glosario.md#sql) |
+| `GET /platos` solo lee, no modifica | 📐 Norma | [RFC 9110 §9.2.1 — métodos HTTP *seguros* (safe)](glosario.md#metodos-seguros) |
+| Consultas parametrizadas (`?`) | ✅ Buena práctica | [OWASP *SQL Injection Prevention Cheat Sheet*](glosario.md#owasp-sql) |
+| Tablas separadas, sin datos repetidos (`pedido_items`) | ✅ Buena práctica | [Normalización relacional (3FN)](glosario.md#3fn) |
+| Una transacción por request, commit/rollback | ✅ Buena práctica | [Patrón *Unit of Work*](glosario.md#unit-of-work) |
+| Conexión entregada por `Depends` | ✅ Buena práctica | [Inyección de dependencias (FastAPI)](glosario.md#inyeccion-dependencias) |
+| Siembra idempotente | ✅ Buena práctica | [Inicialización idempotente (se puede repetir sin efectos extra)](glosario.md#idempotencia) |
+| Montos en enteros | ✅ Buena práctica | [Manejo de dinero en unidades enteras (evitar coma flotante binaria, IEEE 754)](glosario.md#dinero-enteros) |
 
 ## 5. Cómo se verifica
 

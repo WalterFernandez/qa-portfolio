@@ -68,18 +68,18 @@ EN_PUERTA / RECIBIDO / ENTREGADO ──► (Paso 7) confirmaciones del cliente y
 
 | Qué | Tipo | Referencia |
 |---|---|---|
-| Diagrama y tabla de estados, casos válidos e inválidos | 📘 ISTQB | CTFL v4.0 §4.2.4 *Prueba de transición de estados* |
-| Cobertura de transiciones válidas (18/18) y de todas las transiciones (169/169) | 📘 ISTQB | CTFL v4.0 §4.2.4, criterios de cobertura |
-| Test escrito antes del código (rojo → verde) | 📘 ISTQB | CTFL v4.0 §2.1.3 *Enfoques test-first* (TDD) |
-| Probar la lógica sola, sin HTTP ni base | 📘 ISTQB | CTFL v4.0 §2.2.1 Nivel de prueba: *prueba de componente* (unitaria) |
-| Bloquear cancelar después de pagar | 📘 ISTQB | CTFL v4.0 §5.2 *Pruebas basadas en riesgos* |
-| Las transiciones del pedido son correctas y completas | 📐 Norma | ISO/IEC 25010 — Adecuación funcional › *Corrección* y *Completitud* |
-| Diagrama de máquina de estados | 📐 Norma | UML 2.5 (OMG; publicado también como ISO/IEC 19505) — *State Machines* |
-| Un 409 cuando el cambio choca con el estado actual (Paso 4) | 📐 Norma | RFC 9110 §15.5.10 — *409 Conflict* |
-| Las reglas en una tabla de datos, no en `if` sueltos | ✅ Buena práctica | Fuente única de verdad; diseño guiado por tablas (*table-driven*) |
-| Tests parametrizados (un caso por fila) | ✅ Buena práctica | `pytest.mark.parametrize`; principios FIRST |
-| Excepción de dominio con los datos del error | ✅ Buena práctica | Fallar rápido (*fail fast*) con errores descriptivos |
-| Meter un defecto a propósito para ver si los tests lo detectan | ✅ Buena práctica | Prueba de mutación (*mutation testing*), hecha a mano |
+| Diagrama y tabla de estados, casos válidos e inválidos | 📘 ISTQB | [CTFL v4.0 §4.2.4 *Prueba de transición de estados*](glosario.md#transicion-estados) |
+| Cobertura de transiciones válidas (18/18) y de todas las transiciones (169/169) | 📘 ISTQB | [CTFL v4.0 §4.2.4, criterios de cobertura](glosario.md#cobertura-transiciones) |
+| Test escrito antes del código (rojo → verde) | 📘 ISTQB | [CTFL v4.0 §2.1.3 *Enfoques test-first* (TDD)](glosario.md#tdd) |
+| Probar la lógica sola, sin HTTP ni base | 📘 ISTQB | [CTFL v4.0 §2.2.1 Nivel de prueba: *prueba de componente* (unitaria)](glosario.md#prueba-componente) |
+| Bloquear cancelar después de pagar | 📘 ISTQB | [CTFL v4.0 §5.2 *Pruebas basadas en riesgos*](glosario.md#riesgos) |
+| Las transiciones del pedido son correctas y completas | 📐 Norma | [ISO/IEC 25010 — Adecuación funcional › *Corrección* y *Completitud*](glosario.md#adecuacion-funcional) |
+| Diagrama de máquina de estados | 📐 Norma | [UML 2.5 (OMG; publicado también como ISO/IEC 19505) — *State Machines*](glosario.md#uml-estados) |
+| Un 409 cuando el cambio choca con el estado actual (Paso 4) | 📐 Norma | [RFC 9110 §15.5.10 — *409 Conflict*](glosario.md#http-409) |
+| Las reglas en una tabla de datos, no en `if` sueltos | ✅ Buena práctica | [Fuente única de verdad; diseño guiado por tablas (*table-driven*)](glosario.md#table-driven) |
+| Tests parametrizados (un caso por fila) | ✅ Buena práctica | [`pytest.mark.parametrize`; principios FIRST](glosario.md#parametrizados) |
+| Excepción de dominio con los datos del error | ✅ Buena práctica | [Fallar rápido (*fail fast*) con errores descriptivos](glosario.md#fail-fast) |
+| Meter un defecto a propósito para ver si los tests lo detectan | ✅ Buena práctica | [Prueba de mutación (*mutation testing*), hecha a mano](glosario.md#mutacion) |
 
 ## 5. Cómo se verifica
 

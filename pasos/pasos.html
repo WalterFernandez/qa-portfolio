@@ -110,6 +110,9 @@
   .info-sec[hidden] { display: none; }
   .here { background: var(--surface-2); border-radius: 8px; padding: 10px 14px; margin-top: 14px; }
   .here h3 { margin-top: 0; }
+  .term-ref { color: var(--muted); font-size: 14px; }
+  .here li .go { margin-left: 6px; font-size: 13px; color: var(--accent); background: none; border: 0; cursor: pointer; padding: 0; font: inherit; font-weight: 600; }
+  .here li .go:hover { text-decoration: underline; }
 
   /* Modo presentación */
   body.present { overflow: hidden; }
@@ -250,19 +253,19 @@
   <h2>Con qué se alinea</h2>
   <div class="tbl"><table>
     <tr><th>Qué</th><th>Tipo</th><th>Referencia</th></tr>
-    <tr><td>Escribir el test antes que el código</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.3 <em>Enfoques test-first</em> (TDD)</td></tr>
-    <tr><td>Prueba rápida de "¿está vivo?"</td><td><span class="tag istqb">📘 ISTQB</span></td><td><em>Smoke test</em> (glosario ISTQB)</td></tr>
-    <tr><td>Probar temprano, desde el primer commit</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.5 <em>Shift-left</em></td></tr>
-    <tr><td>Versiones fijas, <code>.gitignore</code>, commits identificables</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §5.4 <em>Gestión de la configuración</em></td></tr>
-    <tr><td>Activar defectos a propósito</td><td><span class="tag istqb">📘 ISTQB</span></td><td><em>Defect seeding</em> (glosario ISTQB)</td></tr>
-    <tr><td>Código fácil de probar</td><td><span class="tag norma">📐 Norma</span></td><td>ISO/IEC 25010 — Mantenibilidad › <em>Capacidad de ser probado</em></td></tr>
-    <tr><td>Documentación de la API en <code>/docs</code></td><td><span class="tag norma">📐 Norma</span></td><td>OpenAPI Specification 3.1</td></tr>
-    <tr><td>Respuestas JSON</td><td><span class="tag norma">📐 Norma</span></td><td>RFC 8259</td></tr>
-    <tr><td>Configuración fuera del código</td><td><span class="tag bp">✅ Buena práctica</span></td><td><em>Twelve-Factor App</em>, factor III</td></tr>
-    <tr><td>Fábrica de aplicación</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Patrón <em>Application Factory</em></td></tr>
-    <tr><td>Cada test con sus propios datos</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Principios FIRST (<em>Independent</em>)</td></tr>
-    <tr><td>Mensajes <code>feat(demo): …</code></td><td><span class="tag bp">✅ Buena práctica</span></td><td><em>Conventional Commits</em> 1.0</td></tr>
-    <tr><td>Entorno virtual <code>.venv</code></td><td><span class="tag bp">✅ Buena práctica</span></td><td>PEP 405</td></tr>
+    <tr><td>Escribir el test antes que el código</td><td><span class="tag istqb" data-term="tdd">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.3 <em>Enfoques test-first</em> (TDD)</td></tr>
+    <tr><td>Prueba rápida de "¿está vivo?"</td><td><span class="tag istqb" data-term="smoke-test">📘 ISTQB</span></td><td><em>Smoke test</em> (glosario ISTQB)</td></tr>
+    <tr><td>Probar temprano, desde el primer commit</td><td><span class="tag istqb" data-term="shift-left">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.5 <em>Shift-left</em></td></tr>
+    <tr><td>Versiones fijas, <code>.gitignore</code>, commits identificables</td><td><span class="tag istqb" data-term="gestion-configuracion">📘 ISTQB</span></td><td>CTFL v4.0 §5.4 <em>Gestión de la configuración</em></td></tr>
+    <tr><td>Activar defectos a propósito</td><td><span class="tag istqb" data-term="defect-seeding">📘 ISTQB</span></td><td><em>Defect seeding</em> (glosario ISTQB)</td></tr>
+    <tr><td>Código fácil de probar</td><td><span class="tag norma" data-term="capacidad-prueba">📐 Norma</span></td><td>ISO/IEC 25010 — Mantenibilidad › <em>Capacidad de ser probado</em></td></tr>
+    <tr><td>Documentación de la API en <code>/docs</code></td><td><span class="tag norma" data-term="openapi">📐 Norma</span></td><td>OpenAPI Specification 3.1</td></tr>
+    <tr><td>Respuestas JSON</td><td><span class="tag norma" data-term="json">📐 Norma</span></td><td>RFC 8259</td></tr>
+    <tr><td>Configuración fuera del código</td><td><span class="tag bp" data-term="twelve-factor">✅ Buena práctica</span></td><td><em>Twelve-Factor App</em>, factor III</td></tr>
+    <tr><td>Fábrica de aplicación</td><td><span class="tag bp" data-term="application-factory">✅ Buena práctica</span></td><td>Patrón <em>Application Factory</em></td></tr>
+    <tr><td>Cada test con sus propios datos</td><td><span class="tag bp" data-term="first">✅ Buena práctica</span></td><td>Principios FIRST (<em>Independent</em>)</td></tr>
+    <tr><td>Mensajes <code>feat(demo): …</code></td><td><span class="tag bp" data-term="conventional-commits">✅ Buena práctica</span></td><td><em>Conventional Commits</em> 1.0</td></tr>
+    <tr><td>Entorno virtual <code>.venv</code></td><td><span class="tag bp" data-term="pep405">✅ Buena práctica</span></td><td>PEP 405</td></tr>
   </table></div>
 </section>
 
@@ -351,19 +354,19 @@
   <h2>Con qué se alinea</h2>
   <div class="tbl"><table>
     <tr><th>Qué</th><th>Tipo</th><th>Referencia</th></tr>
-    <tr><td>Test antes del código (rojo → verde)</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.3 <em>Test-first</em> (TDD)</td></tr>
-    <tr><td>Precio del servidor, dinero sin <code>float</code></td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §5.2 <em>Pruebas basadas en riesgos</em></td></tr>
-    <tr><td>Reiniciar y verificar que no se duplica</td><td><span class="tag istqb">📘 ISTQB</span></td><td>Re-ejecución / regresión (CTFL v4.0 §2.2.3)</td></tr>
-    <tr><td>CHECK, FOREIGN KEY, PRIMARY KEY</td><td><span class="tag norma">📐 Norma</span></td><td>ISO/IEC 25010 — Seguridad › <em>Integridad</em>; Fiabilidad</td></tr>
-    <tr><td>Datos persistentes tras reinicio</td><td><span class="tag norma">📐 Norma</span></td><td>ISO/IEC 25010 — Fiabilidad › <em>Recuperabilidad</em></td></tr>
-    <tr><td>Lenguaje SQL de las tablas</td><td><span class="tag norma">📐 Norma</span></td><td>ISO/IEC 9075 (SQLite implementa un subconjunto)</td></tr>
-    <tr><td><code>GET /platos</code> solo lee</td><td><span class="tag norma">📐 Norma</span></td><td>RFC 9110 §9.2.1 — métodos seguros</td></tr>
-    <tr><td>Consultas parametrizadas</td><td><span class="tag bp">✅ Buena práctica</span></td><td>OWASP <em>SQL Injection Prevention</em></td></tr>
-    <tr><td>Tablas separadas, sin datos repetidos</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Normalización relacional (3FN)</td></tr>
-    <tr><td>Una transacción por request</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Patrón <em>Unit of Work</em></td></tr>
-    <tr><td>Conexión entregada por <code>Depends</code></td><td><span class="tag bp">✅ Buena práctica</span></td><td>Inyección de dependencias</td></tr>
-    <tr><td>Siembra que se puede repetir</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Inicialización idempotente</td></tr>
-    <tr><td>Montos en enteros</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Evitar coma flotante binaria (IEEE 754) con dinero</td></tr>
+    <tr><td>Test antes del código (rojo → verde)</td><td><span class="tag istqb" data-term="tdd">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.3 <em>Test-first</em> (TDD)</td></tr>
+    <tr><td>Precio del servidor, dinero sin <code>float</code></td><td><span class="tag istqb" data-term="riesgos">📘 ISTQB</span></td><td>CTFL v4.0 §5.2 <em>Pruebas basadas en riesgos</em></td></tr>
+    <tr><td>Reiniciar y verificar que no se duplica</td><td><span class="tag istqb" data-term="regresion">📘 ISTQB</span></td><td>Re-ejecución / regresión (CTFL v4.0 §2.2.3)</td></tr>
+    <tr><td>CHECK, FOREIGN KEY, PRIMARY KEY</td><td><span class="tag norma" data-term="integridad">📐 Norma</span></td><td>ISO/IEC 25010 — Seguridad › <em>Integridad</em>; Fiabilidad</td></tr>
+    <tr><td>Datos persistentes tras reinicio</td><td><span class="tag norma" data-term="recuperabilidad">📐 Norma</span></td><td>ISO/IEC 25010 — Fiabilidad › <em>Recuperabilidad</em></td></tr>
+    <tr><td>Lenguaje SQL de las tablas</td><td><span class="tag norma" data-term="sql">📐 Norma</span></td><td>ISO/IEC 9075 (SQLite implementa un subconjunto)</td></tr>
+    <tr><td><code>GET /platos</code> solo lee</td><td><span class="tag norma" data-term="metodos-seguros">📐 Norma</span></td><td>RFC 9110 §9.2.1 — métodos seguros</td></tr>
+    <tr><td>Consultas parametrizadas</td><td><span class="tag bp" data-term="owasp-sql">✅ Buena práctica</span></td><td>OWASP <em>SQL Injection Prevention</em></td></tr>
+    <tr><td>Tablas separadas, sin datos repetidos</td><td><span class="tag bp" data-term="3fn">✅ Buena práctica</span></td><td>Normalización relacional (3FN)</td></tr>
+    <tr><td>Una transacción por request</td><td><span class="tag bp" data-term="unit-of-work">✅ Buena práctica</span></td><td>Patrón <em>Unit of Work</em></td></tr>
+    <tr><td>Conexión entregada por <code>Depends</code></td><td><span class="tag bp" data-term="inyeccion-dependencias">✅ Buena práctica</span></td><td>Inyección de dependencias</td></tr>
+    <tr><td>Siembra que se puede repetir</td><td><span class="tag bp" data-term="idempotencia">✅ Buena práctica</span></td><td>Inicialización idempotente</td></tr>
+    <tr><td>Montos en enteros</td><td><span class="tag bp" data-term="dinero-enteros">✅ Buena práctica</span></td><td>Evitar coma flotante binaria (IEEE 754) con dinero</td></tr>
   </table></div>
 </section>
 
@@ -475,18 +478,18 @@
   <h2>Con qué se alinea</h2>
   <div class="tbl"><table>
     <tr><th>Qué</th><th>Tipo</th><th>Referencia</th></tr>
-    <tr><td>Diagrama y tabla de estados, casos válidos e inválidos</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §4.2.4 <em>Transición de estados</em></td></tr>
-    <tr><td>Cobertura de transiciones válidas (18/18) y de todas (169/169)</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §4.2.4, criterios de cobertura</td></tr>
-    <tr><td>Test antes del código (rojo → verde)</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.3 <em>Test-first</em> (TDD)</td></tr>
-    <tr><td>Lógica probada sola, sin HTTP ni base</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §2.2.1 <em>Prueba de componente</em></td></tr>
-    <tr><td>Bloquear cancelar después de pagar</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §5.2 <em>Pruebas basadas en riesgos</em></td></tr>
-    <tr><td>Transiciones correctas y completas</td><td><span class="tag norma">📐 Norma</span></td><td>ISO/IEC 25010 — Adecuación funcional › <em>Corrección</em>, <em>Completitud</em></td></tr>
-    <tr><td>Diagrama de máquina de estados</td><td><span class="tag norma">📐 Norma</span></td><td>UML 2.5 (OMG; también ISO/IEC 19505) — <em>State Machines</em></td></tr>
-    <tr><td>409 si el cambio choca con el estado (Paso 4)</td><td><span class="tag norma">📐 Norma</span></td><td>RFC 9110 §15.5.10 — <em>409 Conflict</em></td></tr>
-    <tr><td>Reglas en una tabla, no en <code>if</code> sueltos</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Fuente única de verdad; diseño <em>table-driven</em></td></tr>
-    <tr><td>Tests parametrizados</td><td><span class="tag bp">✅ Buena práctica</span></td><td><code>pytest.mark.parametrize</code>; FIRST</td></tr>
-    <tr><td>Excepción de dominio con datos</td><td><span class="tag bp">✅ Buena práctica</span></td><td><em>Fail fast</em> con errores descriptivos</td></tr>
-    <tr><td>Defecto metido a propósito</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Prueba de mutación, hecha a mano</td></tr>
+    <tr><td>Diagrama y tabla de estados, casos válidos e inválidos</td><td><span class="tag istqb" data-term="transicion-estados">📘 ISTQB</span></td><td>CTFL v4.0 §4.2.4 <em>Transición de estados</em></td></tr>
+    <tr><td>Cobertura de transiciones válidas (18/18) y de todas (169/169)</td><td><span class="tag istqb" data-term="cobertura-transiciones">📘 ISTQB</span></td><td>CTFL v4.0 §4.2.4, criterios de cobertura</td></tr>
+    <tr><td>Test antes del código (rojo → verde)</td><td><span class="tag istqb" data-term="tdd">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.3 <em>Test-first</em> (TDD)</td></tr>
+    <tr><td>Lógica probada sola, sin HTTP ni base</td><td><span class="tag istqb" data-term="prueba-componente">📘 ISTQB</span></td><td>CTFL v4.0 §2.2.1 <em>Prueba de componente</em></td></tr>
+    <tr><td>Bloquear cancelar después de pagar</td><td><span class="tag istqb" data-term="riesgos">📘 ISTQB</span></td><td>CTFL v4.0 §5.2 <em>Pruebas basadas en riesgos</em></td></tr>
+    <tr><td>Transiciones correctas y completas</td><td><span class="tag norma" data-term="adecuacion-funcional">📐 Norma</span></td><td>ISO/IEC 25010 — Adecuación funcional › <em>Corrección</em>, <em>Completitud</em></td></tr>
+    <tr><td>Diagrama de máquina de estados</td><td><span class="tag norma" data-term="uml-estados">📐 Norma</span></td><td>UML 2.5 (OMG; también ISO/IEC 19505) — <em>State Machines</em></td></tr>
+    <tr><td>409 si el cambio choca con el estado (Paso 4)</td><td><span class="tag norma" data-term="http-409">📐 Norma</span></td><td>RFC 9110 §15.5.10 — <em>409 Conflict</em></td></tr>
+    <tr><td>Reglas en una tabla, no en <code>if</code> sueltos</td><td><span class="tag bp" data-term="table-driven">✅ Buena práctica</span></td><td>Fuente única de verdad; diseño <em>table-driven</em></td></tr>
+    <tr><td>Tests parametrizados</td><td><span class="tag bp" data-term="parametrizados">✅ Buena práctica</span></td><td><code>pytest.mark.parametrize</code>; FIRST</td></tr>
+    <tr><td>Excepción de dominio con datos</td><td><span class="tag bp" data-term="fail-fast">✅ Buena práctica</span></td><td><em>Fail fast</em> con errores descriptivos</td></tr>
+    <tr><td>Defecto metido a propósito</td><td><span class="tag bp" data-term="mutacion">✅ Buena práctica</span></td><td>Prueba de mutación, hecha a mano</td></tr>
   </table></div>
 </section>
 
@@ -519,6 +522,17 @@ delivery.estados.TransicionInvalida: No se puede pasar de PAGADO a CANCELADO</co
     <button class="btn" id="info-close" aria-label="Cerrar">✕ Cerrar</button>
   </div>
   <div class="info-body">
+
+    <!-- FICHA DE UN CONCEPTO (se arma desde TERMINOS, generado por generar_glosario.py) -->
+    <section class="info-sec" data-sec="term" data-title="" hidden>
+      <p class="term-ref" id="term-ref"></p>
+      <p id="term-que"></p>
+      <div class="here">
+        <h3>Dónde lo aplicamos en este proyecto</h3>
+        <ul id="term-pasos"></ul>
+      </div>
+      <p><button class="btn" id="term-cat"></button></p>
+    </section>
 
     <!-- ISTQB -->
     <section class="info-sec" data-sec="istqb" data-title="📘 ISTQB CTFL v4.0">
@@ -712,6 +726,47 @@ delivery.estados.TransicionInvalida: No se puede pasar de PAGADO a CANCELADO</co
   const info = document.getElementById('info');
   const infoTitle = document.getElementById('info-title');
   const kinds = { istqb: 'istqb', norma: 'norma', bp: 'bp' };
+  const ETIQUETA = { istqb: '📘 ISTQB', norma: '📐 Norma', bp: '✅ Buena práctica' };
+  /* TERMINOS:INICIO */const TERMINOS = {"tdd":{"tipo":"istqb","titulo":"TDD: el test antes que el código","ref":"CTFL v4.0 §2.1.3 Enfoques test-first","que":"*Test-Driven Development*: primero se escribe un test que falla (rojo), después el código mínimo para que pase (verde) y al final se ordena (*refactor*). El test funciona como especificación y como red de seguridad.","pasos":{"1":"El primer test fue `GET /salud`; falló porque no existía `delivery.main`, y recién ahí se escribió la app.","2":"Los tests del catálogo fallaron con 404 en `/platos` antes de crear la base y la ruta.","3":"`test_estados.py` falló porque no existía `delivery.estados`; después se escribió la máquina de estados."}},"smoke-test":{"tipo":"istqb","titulo":"Smoke test (prueba de humo)","ref":"Glosario ISTQB: smoke test","que":"Prueba mínima y rápida que confirma que el sistema arranca y responde. Si falla, no tiene sentido correr el resto de las pruebas.","pasos":{"1":"`GET /salud` responde `{\"estado\": \"ok\"}`: si eso falla, la app ni siquiera levantó."}},"shift-left":{"tipo":"istqb","titulo":"Shift-left: probar temprano","ref":"CTFL v4.0 §2.1.5 Shift-left","que":"Mover las pruebas hacia el inicio del desarrollo. Un defecto encontrado temprano es más barato de corregir que uno encontrado al final.","pasos":{"1":"Desde el primer commit hay tests automáticos; ninguna pieza se suma sin su prueba."}},"gestion-configuracion":{"tipo":"istqb","titulo":"Gestión de la configuración","ref":"CTFL v4.0 §5.4 Gestión de la configuración","que":"Identificar y controlar las versiones de todo lo que forma el sistema (código, dependencias, tests) para poder reproducir exactamente qué se probó.","pasos":{"1":"Versiones exactas en `requirements.txt`, `.gitignore` para no versionar basura y commits con mensajes identificables."}},"defect-seeding":{"tipo":"istqb","titulo":"Defect seeding (siembra de defectos)","ref":"Glosario ISTQB: fault seeding / defect seeding","que":"Introducir defectos conocidos a propósito para medir si las pruebas los detectan. Sirve para evaluar la calidad de la propia suite.","pasos":{"1":"`Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8."}},"capacidad-prueba":{"tipo":"norma","titulo":"ISO/IEC 25010: capacidad de ser probado","ref":"ISO/IEC 25010 — Mantenibilidad › Capacidad de ser probado","que":"Característica de calidad: qué tan fácil es establecer criterios de prueba y ejecutarlos sobre el sistema.","pasos":{"1":"`crear_app(cfg)` recibe la configuración por parámetro, así cada test arma su app con una base temporal propia."}},"openapi":{"tipo":"norma","titulo":"OpenAPI Specification 3.1","ref":"OpenAPI Initiative — OAS 3.1","que":"Formato estándar para describir una API REST (rutas, parámetros, respuestas) que entienden humanos y herramientas.","pasos":{"1":"FastAPI genera la especificación sola y la muestra en `/docs`. En la etapa 2 se usa como contrato."}},"json":{"tipo":"norma","titulo":"RFC 8259: formato JSON","ref":"IETF RFC 8259","que":"Define la sintaxis de JSON, el formato de intercambio de datos de la API.","pasos":{"1":"Todas las respuestas, empezando por `/salud`, son JSON válido."}},"twelve-factor":{"tipo":"bp","titulo":"Twelve-Factor App, factor III: configuración","ref":"The Twelve-Factor App — III. Config","que":"La configuración que cambia entre entornos (rutas, interruptores) va en variables de entorno, no escrita en el código.","pasos":{"1":"`Config` lee la ruta de la base y los defectos desde variables de entorno."}},"application-factory":{"tipo":"bp","titulo":"Patrón Application Factory","ref":"Patrón de diseño Application Factory","que":"En vez de una app global, una función que la construye a pedido con la configuración que se le pase.","pasos":{"1":"`crear_app(cfg)` permite tener varias apps independientes, por ejemplo una por test."}},"first":{"tipo":"bp","titulo":"Principios FIRST de los tests","ref":"FIRST: Fast, Independent, Repeatable, Self-validating, Timely","que":"Buenos tests unitarios: rápidos, independientes entre sí, repetibles, que se validan solos (pasa o falla) y escritos a tiempo.","pasos":{"1":"Cada test usa su propia base temporal (`tmp_path`): ninguno depende de otro.","3":"Los 29 tests de estados corren en milisegundos, sin HTTP ni base."}},"conventional-commits":{"tipo":"bp","titulo":"Conventional Commits 1.0","ref":"conventionalcommits.org 1.0","que":"Formato de mensajes de commit `tipo(alcance): descripción` que hace legible el historial.","pasos":{"1":"Mensajes como `feat(demo): esqueleto FastAPI con /salud` o `docs(pasos): …`."}},"pep405":{"tipo":"bp","titulo":"PEP 405: entornos virtuales","ref":"Python PEP 405","que":"Cada proyecto tiene sus propias dependencias aisladas, sin mezclarse con las del sistema.","pasos":{"1":"`sistema-demo/.venv` con las versiones fijas de `requirements.txt`."}},"riesgos":{"tipo":"istqb","titulo":"Pruebas basadas en riesgos","ref":"CTFL v4.0 §5.2 Gestión de riesgos","que":"Priorizar qué probar según la probabilidad y el impacto de que algo salga mal. Los riesgos de producto más graves se mitigan primero.","pasos":{"2":"Riesgo: cobro incorrecto. Mitigación: el precio lo fija el servidor y se guarda en enteros.","3":"Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago."}},"regresion":{"tipo":"istqb","titulo":"Pruebas de regresión","ref":"CTFL v4.0 §2.2.3 Pruebas de confirmación y de regresión","que":"Volver a ejecutar pruebas para confirmar que algo que funcionaba sigue funcionando después de un cambio o, en este caso, después de un reinicio.","pasos":{"2":"`test_siembra_no_duplica_al_reiniciar` arranca la app dos veces sobre la misma base y verifica que sigan siendo 4 platos."}},"integridad":{"tipo":"norma","titulo":"ISO/IEC 25010: integridad","ref":"ISO/IEC 25010 — Seguridad › Integridad","que":"El sistema impide modificaciones indebidas de los datos.","pasos":{"2":"Restricciones en la base: `CHECK (precio > 0)`, `FOREIGN KEY` y `PRIMARY KEY (pedido_id, plato_id)`."}},"recuperabilidad":{"tipo":"norma","titulo":"ISO/IEC 25010: capacidad de recuperación","ref":"ISO/IEC 25010 — Fiabilidad › Capacidad de recuperación","que":"Ante una interrupción, el sistema recupera los datos y su estado.","pasos":{"2":"La base es un archivo SQLite: al reiniciar el servidor los datos siguen ahí."}},"sql":{"tipo":"norma","titulo":"ISO/IEC 9075: lenguaje SQL","ref":"ISO/IEC 9075","que":"Norma que define el lenguaje SQL. Cada motor implementa un subconjunto con extensiones propias.","pasos":{"2":"Las 5 tablas se crean con SQL estándar; SQLite implementa un subconjunto."}},"metodos-seguros":{"tipo":"norma","titulo":"RFC 9110: métodos HTTP seguros","ref":"IETF RFC 9110 §9.2.1 Safe Methods","que":"Un método *seguro* (como `GET`) solo lee: no cambia nada en el servidor.","pasos":{"2":"`GET /platos` solo consulta el menú; nunca modifica la base."}},"owasp-sql":{"tipo":"bp","titulo":"OWASP: prevención de inyección SQL","ref":"OWASP SQL Injection Prevention Cheat Sheet","que":"Nunca armar SQL pegando texto del usuario; usar consultas parametrizadas para que los datos no se interpreten como código.","pasos":{"2":"Todas las consultas usan parámetros `?`."}},"3fn":{"tipo":"bp","titulo":"Normalización relacional (3FN)","ref":"Tercera forma normal","que":"Organizar las tablas para que cada dato viva en un solo lugar y no se repita.","pasos":{"2":"Los items de un pedido van en `pedido_items`, separados de `pedidos` y de `platos`."}},"unit-of-work":{"tipo":"bp","titulo":"Patrón Unit of Work","ref":"Patrón Unit of Work (Fowler, PoEAA)","que":"Todos los cambios de una operación se guardan juntos o no se guarda ninguno.","pasos":{"2":"`obtener_ctx` abre una conexión por request: *commit* si todo sale bien, *rollback* si algo falla."}},"inyeccion-dependencias":{"tipo":"bp","titulo":"Inyección de dependencias","ref":"Patrón Dependency Injection","que":"Una función recibe lo que necesita desde afuera en vez de crearlo ella misma. Facilita probarla y reemplazar piezas.","pasos":{"2":"Las rutas reciben el `Ctx` (conexión + configuración) mediante `Depends(obtener_ctx)` de FastAPI."}},"idempotencia":{"tipo":"bp","titulo":"Inicialización idempotente","ref":"Idempotencia","que":"Una operación idempotente puede repetirse muchas veces con el mismo resultado que si se hiciera una sola vez.","pasos":{"2":"La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos."}},"dinero-enteros":{"tipo":"bp","titulo":"Dinero en unidades enteras","ref":"Evitar coma flotante binaria (IEEE 754) con dinero","que":"Los `float` tienen errores de redondeo (`0.1 + 0.2 = 0.30000000000000004`). Con dinero se usan enteros.","pasos":{"2":"Los precios son `int` en pesos y un test verifica el tipo."}},"transicion-estados":{"tipo":"istqb","titulo":"Prueba de transición de estados","ref":"CTFL v4.0 §4.2.4 Prueba de transición de estados","que":"Técnica de caja negra: se modela el sistema como estados y transiciones (diagrama o tabla) y se diseñan casos que recorren las transiciones válidas e intentan las inválidas.","pasos":{"3":"Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…)."}},"cobertura-transiciones":{"tipo":"istqb","titulo":"Criterios de cobertura de estados","ref":"CTFL v4.0 §4.2.4 Criterios de cobertura","que":"El syllabus define tres niveles: todos los estados, todas las transiciones válidas (cobertura 0-switch) y todas las transiciones, incluidas las inválidas.","pasos":{"3":"Se logró el nivel más alto: 18/18 transiciones válidas y los 169 pares de la tabla 13 × 13."}},"prueba-componente":{"tipo":"istqb","titulo":"Prueba de componente (unitaria)","ref":"CTFL v4.0 §2.2.1 Niveles de prueba","que":"Primer nivel de prueba: se prueba una pieza aislada, sin sus dependencias externas (red, base de datos).","pasos":{"3":"`estados.py` se prueba sin HTTP ni SQLite; la cobertura fina queda en este nivel, el más barato."}},"adecuacion-funcional":{"tipo":"norma","titulo":"ISO/IEC 25010: adecuación funcional","ref":"ISO/IEC 25010 — Adecuación funcional › Corrección y Completitud","que":"El sistema hace todo lo que tiene que hacer (completitud) y lo hace bien (corrección).","pasos":{"3":"Las 18 transiciones permitidas están todas (completitud) y ninguna de más (corrección), verificado por test."}},"uml-estados":{"tipo":"norma","titulo":"UML 2.5: máquinas de estados","ref":"OMG UML 2.5 (también ISO/IEC 19505) — State Machines","que":"Notación estándar para dibujar estados, transiciones y estados finales.","pasos":{"3":"El diagrama del pedido sigue esa notación: estados, flechas y dos estados finales (`CERRADO`, `CANCELADO`)."}},"http-409":{"tipo":"norma","titulo":"RFC 9110: 409 Conflict","ref":"IETF RFC 9110 §15.5.10 409 Conflict","que":"El pedido no se puede completar porque choca con el estado actual del recurso.","pasos":{"3":"`TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos."}},"table-driven":{"tipo":"bp","titulo":"Fuente única de verdad, diseño table-driven","ref":"Single source of truth; table-driven design","que":"Las reglas se escriben como datos (una tabla) en un solo lugar, no repartidas en `if` por todo el código.","pasos":{"3":"`TRANSICIONES` es un diccionario; toda mutación de estado pasará por `validar_transicion`."}},"parametrizados":{"tipo":"bp","titulo":"Tests parametrizados","ref":"pytest.mark.parametrize","que":"Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un caso separado en el reporte.","pasos":{"3":"Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…)."}},"fail-fast":{"tipo":"bp","titulo":"Fail fast con errores descriptivos","ref":"Fail fast","que":"Ante una operación inválida, fallar enseguida con un error que diga qué pasó, en vez de seguir con datos corruptos.","pasos":{"3":"`TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó."}},"mutacion":{"tipo":"bp","titulo":"Prueba de mutación","ref":"Mutation testing","que":"Se cambia el código a propósito (una *mutación*) y se verifica que algún test falle. Si ninguno falla, la suite tiene un hueco.","pasos":{"3":"Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió."}}};/* TERMINOS:FIN */
+
+  // Texto de terminos.json: escapar HTML y convertir `código` y *énfasis*
+  function fmt(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  }
+  function goToPaso(n) {
+    const cover = slides.find(s => s.classList.contains('cover') &&
+      s.querySelector('.kicker')?.textContent.trim() === 'Paso ' + n);
+    if (!cover) return;
+    info.close();
+    if (document.body.classList.contains('present')) show(slides.indexOf(cover));
+    else cover.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function openTerm(id) {
+    const t = TERMINOS[id];
+    if (!t) return;
+    info.querySelectorAll('.info-sec').forEach(s => { s.hidden = s.dataset.sec !== 'term'; });
+    infoTitle.textContent = t.titulo;
+    document.getElementById('term-ref').innerHTML = ETIQUETA[t.tipo] + ' · <strong>Referencia:</strong> ' + fmt(t.ref);
+    document.getElementById('term-que').innerHTML = fmt(t.que);
+    const ul = document.getElementById('term-pasos');
+    ul.innerHTML = '';
+    Object.keys(t.pasos).sort((a, b) => a - b).forEach(n => {
+      const li = document.createElement('li');
+      li.innerHTML = '<strong>Paso ' + n + ':</strong> ' + fmt(t.pasos[n]) + ' ';
+      const b = document.createElement('button');
+      b.className = 'go'; b.textContent = 'Ir al paso ' + n + ' →';
+      b.onclick = () => goToPaso(n);
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    const cat = document.getElementById('term-cat');
+    cat.textContent = 'Ver qué es ' + ETIQUETA[t.tipo] + ' en general →';
+    cat.onclick = () => openInfo(t.tipo);
+    if (!info.open) info.showModal();
+    info.querySelector('.info-body').scrollTop = 0;
+    info.scrollTop = 0;
+  }
   function openInfo(kind) {
     info.querySelectorAll('.info-sec').forEach(s => {
       const on = s.dataset.sec === kind;
@@ -729,9 +784,11 @@ delivery.estados.TransicionInvalida: No se puede pasar de PAGADO a CANCELADO</co
     if (t.closest('button')) return;  // dentro de una tarjeta: la tarjeta ya abre el modal
     t.tabIndex = 0;
     t.setAttribute('role', 'button');
-    t.title = 'Ver qué significa';
-    t.addEventListener('click', () => openInfo(kind));
-    t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInfo(kind); } });
+    const term = t.dataset.term;
+    const abrir = () => term ? openTerm(term) : openInfo(kind);
+    t.title = term && TERMINOS[term] ? 'Ver: ' + TERMINOS[term].titulo : 'Ver qué significa';
+    t.addEventListener('click', abrir);
+    t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
   });
   document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openInfo(b.dataset.open)));
   document.getElementById('info-close').onclick = () => info.close();

@@ -41,8 +41,8 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 a 8, el test se escribe antes que el código.
-- *Smoke test*: `GET /salud` (paso 1).
+- TDD y *shift-left*: pasos 1 a 9, el test se escribe antes que el código.
+- *Smoke test*: `GET /salud` (paso 1); cada página responde y trae sus `data-testid` (paso 9).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
 - Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5); un doble clic en “Pagar” no cobra dos veces (paso 6); el delivery no cierra sin la confirmación del cliente y no se cancela con el pago hecho, ni siquiera a la vez (paso 7); los defectos sembrados se eligieron por probabilidad e impacto: varias zonas horarias y clientes que esperan números (paso 8).
 - Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5); el pago recorre `COTIZADO → PAGADO → ASIGNADO` y firmar o pagar fuera de `COTIZADO` da 409 (paso 6); el recorrido `ASIGNADO → … → CERRADO` y las 6 transiciones del cierre en los dos órdenes (paso 7).
@@ -50,7 +50,7 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 - Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): pasos 4 a 6; los 13 pasos de punta a punta (paso 7).
 - Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5); formato y largo de la firma (paso 6); quién cancela y un estado por tramo pagado (paso 7).
 - Tabla de decisión: estado × firma para el pago (paso 6); estado de partida × quién cancela (paso 7).
-- Defectos sembrados (*defect seeding*): zona horaria y contrato, apagados por defecto y activables por entorno; cada test con el defecto prendido tiene su par apagado como oráculo, y los 170 tests anteriores sirven de regresión (paso 8).
+- Defectos sembrados (*defect seeding*): zona horaria y contrato, apagados por defecto y activables por entorno; cada test con el defecto prendido tiene su par apagado como oráculo, y los 170 tests anteriores sirven de regresión (paso 8); los dos defectos se ven en la pantalla: `NaN` en el total estimado y el historial desordenado (paso 9).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
 
@@ -81,10 +81,11 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 
 ### Dónde lo aplicamos en este proyecto
 
-- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 a 7), completitud: los 13 pasos del negocio (paso 7), interoperabilidad: el defecto de contrato manda texto donde se espera un número (paso 8).
+- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 a 7), completitud: los 13 pasos del negocio (paso 7), interoperabilidad: el defecto de contrato manda texto donde se espera un número (paso 8) y la página muestra `NaN` (paso 9); capacidad de ser probado: `data-testid` fijos y errores con su código (paso 9).
 - UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
 - RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5); 409 `firma_requerida` y `POST /pago` idempotente aunque la norma no lo exija (paso 6); 404 en las 9 rutas de un pedido, 409 `no_cancelable` y 422 con `por` inválido (paso 7).
-- ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4); el defecto de zona horaria las guarda en hora local sin offset y la línea de tiempo se desordena (paso 8).
+- ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4); el defecto de zona horaria las guarda en hora local sin offset y la línea de tiempo se desordena (paso 8); la página del cliente la muestra sin reformatear (paso 9).
+- W3C: Subresource Integrity para Leaflet, Geolocation API en contexto seguro y WCAG 2.2 (tamaño del objetivo táctil) en las páginas (paso 9).
 - ITU-T E.164: máximo de 15 dígitos en el teléfono (paso 4).
 - ISO 6709: latitud en [-90, 90] y longitud en [-180, 180] (paso 5).
 - RFC 2397 y RFC 4648: la firma como *data URL* PNG en base64 (paso 6).
@@ -128,6 +129,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 6: pago idempotente, firma por lista blanca, migración de esquema aditiva, pago y asignación en una sola transacción, primero el estado y después la firma (*fail fast*), control de concurrencia optimista contra la carrera del pago, prueba de mutación (12 de 12 y 7 de 7).
 - Paso 7: concurrencia optimista en las confirmaciones (reintento único) y en cancelar contra pagar, retiro y aviso en una sola transacción, `no_cancelable` con un mensaje por caso (*fail fast*), tests parametrizados por regla y por ruta, prueba de mutación (16 de 16).
 - Paso 8: defectos activables por variables de entorno (Twelve-Factor), dinero en enteros en la base aunque la salida sea texto, reloj fijo para un orden repetible, tests parametrizados para el formato de pesos, prueba de mutación (13 de 13).
+- Paso 9: selectores estables (`data-testid`), mobile-first, mejora progresiva (el mapa es opcional), "Pagar" sin deshabilitar porque el pago es idempotente, un test parametrizado por página, prueba de mutación (7 de 7).
 
 ---
 
@@ -156,6 +158,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 32 tests de firma y pago fallaron con 404 (no existían las rutas) antes de escribir `firmar` y `pagar`.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`.
 - [Paso 8](paso-08-defectos-sembrados.md): Los 18 tests de `test_defectos.py` se escribieron primero: 12 fallaron (rojo) y los 6 de control, con el defecto apagado, ya pasaban.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Los 6 tests de `test_paginas.py` se escribieron antes que las páginas y fallaron con 404, porque no existían las rutas ni `/estaticos`.
 
 <a id="smoke-test"></a>
 
@@ -168,6 +171,7 @@ Prueba mínima y rápida que confirma que el sistema arranca y responde. Si fall
 **En este proyecto:**
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): `GET /salud` responde `{"estado": "ok"}`: si eso falla, la app ni siquiera levantó.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): `test_paginas.py` pide `/`, `/cliente/pedido/1` y `/delivery/pedido/1` y revisa 200, `text/html` y que estén sus `data-testid`. No prueba el comportamiento: eso queda para la prueba manual y para Playwright y Appium.
 
 <a id="shift-left"></a>
 
@@ -205,6 +209,7 @@ Introducir defectos conocidos a propósito para medir si las pruebas los detecta
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): `Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.
 - [Paso 8](paso-08-defectos-sembrados.md): Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `"$ 9.000"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Los dos defectos del Paso 8 se ven en la pantalla: con el de contrato, `total-estimado` muestra `NaN`; con el de zona horaria, la `linea-de-tiempo` del cliente sale desordenada.
 
 <a id="riesgos"></a>
 
@@ -359,6 +364,7 @@ Característica de calidad: qué tan fácil es establecer criterios de prueba y 
 **En este proyecto:**
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): `crear_app(cfg)` recibe la configuración por parámetro, así cada test arma su app con una base temporal propia.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Cada elemento interactivo lleva un `data-testid` fijo, y los errores muestran su código entre corchetes (`[firma_requerida]`): Playwright y Appium no dependen de textos ni de estilos.
 
 <a id="openapi"></a>
 
@@ -519,6 +525,7 @@ Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.
 - [Paso 8](paso-08-defectos-sembrados.md): Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): La línea de tiempo del cliente muestra `ocurrido_en` tal como llega, sin reformatear: con el defecto de zona horaria se ve que falta la `Z`.
 
 <a id="e164"></a>
 
@@ -579,6 +586,43 @@ Capacidad de un sistema de intercambiar información con otros y de que esos otr
 **En este proyecto:**
 
 - [Paso 8](paso-08-defectos-sembrados.md): Con el defecto de contrato, `total` llega como `"$ 22.500"`: un cliente que lo suma o lo compara recibe texto. La página del cliente (Paso 9) muestra `NaN`.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): `total-estimado` se calcula en el navegador con `precio * cantidad`, sin convertir: si la API manda `"$ 9.000"`, la cuenta da `NaN` y el problema de contrato queda a la vista.
+
+<a id="sri"></a>
+
+#### W3C Subresource Integrity
+
+📐 Norma · **Referencia:** W3C Subresource Integrity (SRI)
+
+El atributo `integrity` lleva el hash del archivo esperado. Si un CDN entrega otra cosa, el navegador no lo ejecuta. Protege contra un CDN comprometido o un archivo cambiado.
+
+**En este proyecto:**
+
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Leaflet 1.9.4 se carga desde unpkg con `integrity="sha256-..."`. Los dos hashes se verificaron descargando los archivos y calculando su SHA-256.
+
+<a id="geolocalizacion"></a>
+
+#### W3C Geolocation API
+
+📐 Norma · **Referencia:** W3C Geolocation API; W3C Secure Contexts
+
+Interfaz del navegador para pedir la ubicación, con permiso de la persona. Solo funciona en un contexto seguro: HTTPS o `localhost`.
+
+**En este proyecto:**
+
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): `btn-ubicacion` usa `navigator.geolocation.getCurrentPosition`. Si falla, por ejemplo por `http` desde otra máquina, se muestra `[ubicacion_no_disponible]` y el punto se puede marcar en el mapa.
+
+<a id="wcag-objetivo-tactil"></a>
+
+#### WCAG 2.2: tamaño del objetivo táctil
+
+📐 Norma · **Referencia:** WCAG 2.2 — criterio 2.5.8 Target Size (Minimum)
+
+Las pautas de accesibilidad del W3C piden que un objetivo táctil mida al menos 24 × 24 px (nivel AA). Las guías de Android recomiendan 48 dp.
+
+**En este proyecto:**
+
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Todos los botones miden al menos 48 px de alto y ocupan todo el ancho, en una pantalla de 360 px.
 
 ### ✅ Buenas prácticas
 
@@ -707,6 +751,7 @@ Una operación idempotente puede repetirse muchas veces con el mismo resultado q
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery. También si los dos pagos llegan al mismo tiempo.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): El botón Pagar no se deshabilita en el clic: con un doble clic, los dos esperan el mismo envío de firma y el segundo `POST /pago` es idempotente. Así el riesgo se puede probar desde la página.
 
 <a id="concurrencia-optimista"></a>
 
@@ -765,6 +810,7 @@ Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un c
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Reglas R1 a R5 de la cancelación, las 9 rutas del 404 y los 5 bodies inválidos de `por`, cada uno con su id.
 - [Paso 8](paso-08-defectos-sembrados.md): `formato.pesos` con seis montos con nombre: 0, 999, 1000 (primer separador), 9000, 22500 y 1234567 (dos separadores).
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Un solo test, parametrizado por página (`inicio`, `cliente`, `delivery`), revisa la lista de `data-testid` de cada una.
 
 <a id="fail-fast"></a>
 
@@ -798,6 +844,7 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): 12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): 16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.
 - [Paso 8](paso-08-defectos-sembrados.md): 13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo.
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): 7 de 7: cambiar un `data-testid` (`btn-pedir`, `canvas-firma`, `btn-pagar`, `btn-entregado`, `linea-de-tiempo`), servir la página equivocada o montar los estáticos en otra ruta rompe al menos un test.
 
 <a id="validacion-entrada"></a>
 
@@ -849,5 +896,41 @@ El esquema de la base cambia en pasos chicos, sin perder datos. Una migración a
 **En este proyecto:**
 
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): `CREATE TABLE IF NOT EXISTS` no toca una tabla que ya existe: al arrancar, `db.py` revisa `PRAGMA table_info` y agrega `firma` si falta. Un test parte de una base sin esa columna.
+
+<a id="data-testid"></a>
+
+#### Selectores estables (data-testid)
+
+✅ Buena práctica · **Referencia:** Testing Library y Playwright: localizadores por test id
+
+Un atributo dedicado a las pruebas, que no cambia cuando cambian el texto, el estilo o el orden. Las pruebas de UI no se rompen por un rediseño.
+
+**En este proyecto:**
+
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Los `data-testid` son exactamente los del plan, porque los usan Playwright (etapa 4) y Appium (etapa 3). Los generados por JS llevan el id: `plato-{id}` y `cantidad-{plato_id}`.
+
+<a id="mobile-first"></a>
+
+#### Diseño mobile-first
+
+✅ Buena práctica · **Referencia:** Mobile First (Luke Wroblewski)
+
+Diseñar primero para la pantalla más chica y después agrandar. Obliga a priorizar lo importante.
+
+**En este proyecto:**
+
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): Las tres páginas se pensaron para 360 px de ancho (el Galaxy A11), con un máximo de 480 px, una columna y sin frameworks.
+
+<a id="mejora-progresiva"></a>
+
+#### Mejora progresiva
+
+✅ Buena práctica · **Referencia:** Progressive enhancement (MDN)
+
+La función básica anda con lo mínimo, y lo extra se suma si está disponible. Si falla lo extra, la página sigue sirviendo.
+
+**En este proyecto:**
+
+- [Paso 9](paso-09-paginas-cliente-y-delivery.md): El mapa es opcional: sin internet, Leaflet no carga y la página avisa, pero el pedido se puede hacer igual. Sin `lat` y `lng`, la API acepta `null`.
 
 <!-- TERMINOS:FIN -->

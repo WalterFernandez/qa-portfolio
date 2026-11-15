@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delivery demo</title>
+  <link rel="stylesheet" href="/estaticos/estilos.css">
+</head>
+<body>
+  <header>
+    <h1>Delivery demo</h1>
+    <p>Sistema ficticio para practicar pruebas.</p>
+  </header>
+  <main>
+    <p class="mensaje-error" data-testid="msg-error" role="alert" hidden></p>
+
+    <!-- Paso 1: el cliente mira el menú y deja su teléfono, como si escribiera por WhatsApp. -->
+    <section>
+      <h2>Menú de hoy</h2>
+      <ul class="lista" data-testid="catalogo"></ul>
+    </section>
+
+    <section>
+      <h2>Hacé tu pedido</h2>
+      <label for="telefono">Tu celular (te mandamos el link por WhatsApp)</label>
+      <input id="telefono" type="tel" inputmode="tel" placeholder="1122334455"
+             autocomplete="tel" data-testid="input-telefono">
+      <button type="button" data-testid="btn-pedir">Pedir</button>
+      <!-- Paso 2-3: el servicio responde con un mensaje en la bandeja (GET /mensajes). -->
+      <p class="mensaje-ok" data-testid="msg-link-enviado" hidden></p>
+    </section>
+  </main>
+
+  <script src="/estaticos/api.js"></script>
+  <script>
+    const $ = (t) => document.querySelector('[data-testid="' + t + '"]');
+
+    async function cargarCatalogo() {
+      try {
+        const platos = await api("GET", "/platos");
+        $("catalogo").replaceChildren(...platos.map((p) => {
+          const li = document.createElement("li");
+          li.dataset.testid = "plato-" + p.id;
+          const nombre = document.createElement("span");
+          nombre.textContent = p.nombre;
+          const precio = document.createElement("span");
+          precio.className = "precio";
+          precio.textContent = pesos(p.precio);
+          li.append(nombre, precio);
+          return li;
+        }));
+      } catch (err) {
+        mostrarError(err);
+      }
+    }
+
+    $("btn-pedir").addEventListener("click", async () => {
+      limpiarError();
+      $("msg-link-enviado").hidden = true;
+      try {
+        const pedido = await api("POST", "/pedidos", { telefono: $("input-telefono").value.trim() });
+        $("msg-link-enviado").textContent =
+          "¡Listo! Pedido #" + pedido.id + ": te mandamos un WhatsApp con el link para armarlo.";
+        $("msg-link-enviado").dataset.pedidoId = pedido.id;
+        $("msg-link-enviado").hidden = false;
+      } catch (err) {
+        mostrarError(err);
+      }
+    });
+
+    cargarCatalogo();
+  </script>
+</body>
+</html>

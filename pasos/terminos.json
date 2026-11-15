@@ -8,7 +8,8 @@
     "5": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "riesgos", "http-409", "http-422", "integridad", "iso6709", "validacion-entrada", "dinero-enteros", "unit-of-work", "fail-fast", "table-driven", "parametrizados", "mutacion"],
     "6": ["transicion-estados", "tabla-decision", "particiones", "valores-limite", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "metodos-idempotentes", "data-url", "integridad", "idempotencia", "concurrencia-optimista", "validacion-entrada", "migracion-esquema", "unit-of-work", "fail-fast", "parametrizados", "mutacion"],
     "7": ["transicion-estados", "cobertura-transiciones", "tabla-decision", "particiones", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "adecuacion-funcional", "integridad", "concurrencia-optimista", "unit-of-work", "fail-fast", "parametrizados", "mutacion"],
-    "8": ["defect-seeding", "oraculo", "tdd", "riesgos", "regresion", "iso8601", "interoperabilidad", "openapi", "twelve-factor", "dinero-enteros", "reloj-inyectable", "parametrizados", "mutacion"]
+    "8": ["defect-seeding", "oraculo", "tdd", "riesgos", "regresion", "iso8601", "interoperabilidad", "openapi", "twelve-factor", "dinero-enteros", "reloj-inyectable", "parametrizados", "mutacion"],
+    "9": ["smoke-test", "tdd", "defect-seeding", "capacidad-prueba", "interoperabilidad", "iso8601", "sri", "geolocalizacion", "wcag-objetivo-tactil", "data-testid", "mobile-first", "mejora-progresiva", "idempotencia", "parametrizados", "mutacion"]
   },
   "terminos": {
     "tdd": {
@@ -23,14 +24,15 @@
         "5": "41 tests de cotización escritos antes que `cargar_datos`: fallaron con 405 porque la ruta `PUT` no existía.",
         "6": "Los 32 tests de firma y pago fallaron con 404 (no existían las rutas) antes de escribir `firmar` y `pagar`.",
         "7": "Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`.",
-        "8": "Los 18 tests de `test_defectos.py` se escribieron primero: 12 fallaron (rojo) y los 6 de control, con el defecto apagado, ya pasaban."
+        "8": "Los 18 tests de `test_defectos.py` se escribieron primero: 12 fallaron (rojo) y los 6 de control, con el defecto apagado, ya pasaban.",
+        "9": "Los 6 tests de `test_paginas.py` se escribieron antes que las páginas y fallaron con 404, porque no existían las rutas ni `/estaticos`."
       }
     },
     "smoke-test": {
       "tipo": "istqb", "titulo": "Smoke test (prueba de humo)",
       "ref": "Glosario ISTQB: smoke test",
       "que": "Prueba mínima y rápida que confirma que el sistema arranca y responde. Si falla, no tiene sentido correr el resto de las pruebas.",
-      "pasos": { "1": "`GET /salud` responde `{\"estado\": \"ok\"}`: si eso falla, la app ni siquiera levantó." }
+      "pasos": { "1": "`GET /salud` responde `{\"estado\": \"ok\"}`: si eso falla, la app ni siquiera levantó.", "9": "`test_paginas.py` pide `/`, `/cliente/pedido/1` y `/delivery/pedido/1` y revisa 200, `text/html` y que estén sus `data-testid`. No prueba el comportamiento: eso queda para la prueba manual y para Playwright y Appium." }
     },
     "shift-left": {
       "tipo": "istqb", "titulo": "Shift-left: probar temprano",
@@ -48,13 +50,13 @@
       "tipo": "istqb", "titulo": "Defect seeding (siembra de defectos)",
       "ref": "Glosario ISTQB: fault seeding / defect seeding",
       "que": "Introducir defectos conocidos a propósito para medir si las pruebas los detectan. Sirve para evaluar la calidad de la propia suite.",
-      "pasos": { "1": "`Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.", "8": "Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `\"$ 9.000\"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4." }
+      "pasos": { "1": "`Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.", "8": "Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `\"$ 9.000\"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4.", "9": "Los dos defectos del Paso 8 se ven en la pantalla: con el de contrato, `total-estimado` muestra `NaN`; con el de zona horaria, la `linea-de-tiempo` del cliente sale desordenada." }
     },
     "capacidad-prueba": {
       "tipo": "norma", "titulo": "ISO/IEC 25010: capacidad de ser probado",
       "ref": "ISO/IEC 25010 — Mantenibilidad › Capacidad de ser probado",
       "que": "Característica de calidad: qué tan fácil es establecer criterios de prueba y ejecutarlos sobre el sistema.",
-      "pasos": { "1": "`crear_app(cfg)` recibe la configuración por parámetro, así cada test arma su app con una base temporal propia." }
+      "pasos": { "1": "`crear_app(cfg)` recibe la configuración por parámetro, así cada test arma su app con una base temporal propia.", "9": "Cada elemento interactivo lleva un `data-testid` fijo, y los errores muestran su código entre corchetes (`[firma_requerida]`): Playwright y Appium no dependen de textos ni de estilos." }
     },
     "openapi": {
       "tipo": "norma", "titulo": "OpenAPI Specification 3.1",
@@ -172,7 +174,7 @@
       "tipo": "bp", "titulo": "Operaciones idempotentes",
       "ref": "Idempotencia",
       "que": "Una operación idempotente puede repetirse muchas veces con el mismo resultado que si se hiciera una sola vez.",
-      "pasos": { "2": "La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos.", "6": "Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery. También si los dos pagos llegan al mismo tiempo." }
+      "pasos": { "2": "La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos.", "6": "Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery. También si los dos pagos llegan al mismo tiempo.", "9": "El botón Pagar no se deshabilita en el clic: con un doble clic, los dos esperan el mismo envío de firma y el segundo `POST /pago` es idempotente. Así el riesgo se puede probar desde la página." }
     },
     "concurrencia-optimista": {
       "tipo": "bp", "titulo": "Control de concurrencia optimista",
@@ -232,7 +234,7 @@
       "tipo": "bp", "titulo": "Tests parametrizados",
       "ref": "pytest.mark.parametrize",
       "que": "Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un caso separado en el reporte.",
-      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).", "4": "Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…", "5": "Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).", "6": "Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.", "7": "Reglas R1 a R5 de la cancelación, las 9 rutas del 404 y los 5 bodies inválidos de `por`, cada uno con su id.", "8": "`formato.pesos` con seis montos con nombre: 0, 999, 1000 (primer separador), 9000, 22500 y 1234567 (dos separadores)." }
+      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).", "4": "Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…", "5": "Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).", "6": "Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.", "7": "Reglas R1 a R5 de la cancelación, las 9 rutas del 404 y los 5 bodies inválidos de `por`, cada uno con su id.", "8": "`formato.pesos` con seis montos con nombre: 0, 999, 1000 (primer separador), 9000, 22500 y 1234567 (dos separadores).", "9": "Un solo test, parametrizado por página (`inicio`, `cliente`, `delivery`), revisa la lista de `data-testid` de cada una." }
     },
     "fail-fast": {
       "tipo": "bp", "titulo": "Fail fast con errores descriptivos",
@@ -244,7 +246,7 @@
       "tipo": "bp", "titulo": "Prueba de mutación",
       "ref": "Mutation testing",
       "que": "Se cambia el código a propósito (una *mutación*) y se verifica que algún test falle. Si ninguno falla, la suite tiene un hueco.",
-      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.", "7": "16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.", "8": "13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo." }
+      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.", "7": "16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.", "8": "13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo.", "9": "7 de 7: cambiar un `data-testid` (`btn-pedir`, `canvas-firma`, `btn-pagar`, `btn-entregado`, `linea-de-tiempo`), servir la página equivocada o montar los estáticos en otra ruta rompe al menos un test." }
     },
     "particiones": {
       "tipo": "istqb", "titulo": "Partición de equivalencia",
@@ -280,7 +282,7 @@
       "tipo": "norma", "titulo": "ISO 8601 / RFC 3339: fechas y horas",
       "ref": "ISO 8601; IETF RFC 3339",
       "que": "Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica UTC; con una sola zona, el texto se ordena igual que el tiempo.",
-      "pasos": { "4": "Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.", "8": "Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`." }
+      "pasos": { "4": "Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.", "8": "Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`.", "9": "La línea de tiempo del cliente muestra `ocurrido_en` tal como llega, sin reformatear: con el defecto de zona horaria se ve que falta la `Z`." }
     },
     "e164": {
       "tipo": "norma", "titulo": "ITU-T E.164: números de teléfono",
@@ -346,7 +348,43 @@
       "tipo": "norma", "titulo": "ISO/IEC 25010: interoperabilidad",
       "ref": "ISO/IEC 25010 — Compatibilidad › Interoperabilidad",
       "que": "Capacidad de un sistema de intercambiar información con otros y de que esos otros la puedan usar. Cambiar el tipo de un campo la rompe, aunque el dato \"sea el mismo\".",
-      "pasos": { "8": "Con el defecto de contrato, `total` llega como `\"$ 22.500\"`: un cliente que lo suma o lo compara recibe texto. La página del cliente (Paso 9) muestra `NaN`." }
+      "pasos": { "8": "Con el defecto de contrato, `total` llega como `\"$ 22.500\"`: un cliente que lo suma o lo compara recibe texto. La página del cliente (Paso 9) muestra `NaN`.", "9": "`total-estimado` se calcula en el navegador con `precio * cantidad`, sin convertir: si la API manda `\"$ 9.000\"`, la cuenta da `NaN` y el problema de contrato queda a la vista." }
+    },
+    "sri": {
+      "tipo": "norma", "titulo": "W3C Subresource Integrity",
+      "ref": "W3C Subresource Integrity (SRI)",
+      "que": "El atributo `integrity` lleva el hash del archivo esperado. Si un CDN entrega otra cosa, el navegador no lo ejecuta. Protege contra un CDN comprometido o un archivo cambiado.",
+      "pasos": { "9": "Leaflet 1.9.4 se carga desde unpkg con `integrity=\"sha256-...\"`. Los dos hashes se verificaron descargando los archivos y calculando su SHA-256." }
+    },
+    "geolocalizacion": {
+      "tipo": "norma", "titulo": "W3C Geolocation API",
+      "ref": "W3C Geolocation API; W3C Secure Contexts",
+      "que": "Interfaz del navegador para pedir la ubicación, con permiso de la persona. Solo funciona en un contexto seguro: HTTPS o `localhost`.",
+      "pasos": { "9": "`btn-ubicacion` usa `navigator.geolocation.getCurrentPosition`. Si falla, por ejemplo por `http` desde otra máquina, se muestra `[ubicacion_no_disponible]` y el punto se puede marcar en el mapa." }
+    },
+    "wcag-objetivo-tactil": {
+      "tipo": "norma", "titulo": "WCAG 2.2: tamaño del objetivo táctil",
+      "ref": "WCAG 2.2 — criterio 2.5.8 Target Size (Minimum)",
+      "que": "Las pautas de accesibilidad del W3C piden que un objetivo táctil mida al menos 24 × 24 px (nivel AA). Las guías de Android recomiendan 48 dp.",
+      "pasos": { "9": "Todos los botones miden al menos 48 px de alto y ocupan todo el ancho, en una pantalla de 360 px." }
+    },
+    "data-testid": {
+      "tipo": "bp", "titulo": "Selectores estables (data-testid)",
+      "ref": "Testing Library y Playwright: localizadores por test id",
+      "que": "Un atributo dedicado a las pruebas, que no cambia cuando cambian el texto, el estilo o el orden. Las pruebas de UI no se rompen por un rediseño.",
+      "pasos": { "9": "Los `data-testid` son exactamente los del plan, porque los usan Playwright (etapa 4) y Appium (etapa 3). Los generados por JS llevan el id: `plato-{id}` y `cantidad-{plato_id}`." }
+    },
+    "mobile-first": {
+      "tipo": "bp", "titulo": "Diseño mobile-first",
+      "ref": "Mobile First (Luke Wroblewski)",
+      "que": "Diseñar primero para la pantalla más chica y después agrandar. Obliga a priorizar lo importante.",
+      "pasos": { "9": "Las tres páginas se pensaron para 360 px de ancho (el Galaxy A11), con un máximo de 480 px, una columna y sin frameworks." }
+    },
+    "mejora-progresiva": {
+      "tipo": "bp", "titulo": "Mejora progresiva",
+      "ref": "Progressive enhancement (MDN)",
+      "que": "La función básica anda con lo mínimo, y lo extra se suma si está disponible. Si falla lo extra, la página sigue sirviendo.",
+      "pasos": { "9": "El mapa es opcional: sin internet, Leaflet no carga y la página avisa, pero el pedido se puede hacer igual. Sin `lat` y `lng`, la API acepta `null`." }
     }
   }
 }

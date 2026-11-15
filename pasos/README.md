@@ -35,6 +35,7 @@ Cada fila de las tablas de normas lleva a la **ficha de su concepto** (qué es, 
 | [6](paso-06-firma-pago-y-asignacion.md) | Firma, pago idempotente y asignación al delivery | `feat(demo): firma, pago idempotente y asignación al delivery` |
 | [7](paso-07-entrega-cierre-y-cancelacion.md) | Entrega, doble confirmación, cierre y cancelación | `feat(demo): entrega, cierre y cancelación` |
 | [8](paso-08-defectos-sembrados.md) | Defectos sembrados: zona horaria y contrato | `feat(demo): defectos sembrados activables por variable de entorno` |
+| [9](paso-09-paginas-cliente-y-delivery.md) | Páginas mobile del cliente y del delivery | `feat(demo): páginas mobile del cliente y del delivery` |
 
 ## Mapa general (hacia dónde vamos)
 

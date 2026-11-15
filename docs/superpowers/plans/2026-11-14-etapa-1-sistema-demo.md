@@ -352,12 +352,12 @@ def test_defecto_contrato_total_como_texto(crear_cliente): ...  # total == "$ 22
   - `delivery.html`: `direccion-entrega`, `btn-retirado`, `btn-en-puerta`, `btn-entregado`, `estado-pedido`, `msg-error`.
   - Diseño mobile-first (ancho 360 px, el del A11), sin frameworks.
 
-- [ ] **Step 1: Test que falla** (smoke): `GET /`, `/cliente/pedido/1` y `/delivery/pedido/1` → 200, `text/html`, y cada uno contiene sus `data-testid` principales (`btn-pedir`; `canvas-firma` y `btn-pagar`; `btn-entregado`).
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar las páginas.
-- [ ] **Step 4:** Correr la suite → PASS.
+- [x] **Step 1: Test que falla** (smoke): `GET /`, `/cliente/pedido/1` y `/delivery/pedido/1` → 200, `text/html`, y cada uno contiene sus `data-testid` principales (`btn-pedir`; `canvas-firma` y `btn-pagar`; `btn-entregado`).
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar las páginas.
+- [x] **Step 4:** Correr la suite → PASS.
 - [ ] **Step 5: Prueba manual** (el usuario, en el navegador de la PC): levantar uvicorn y recorrer los 13 pasos haciendo clic, con la página del cliente y la del delivery en dos pestañas y los links sacados de `GET /mensajes`. Repetir con `DEMO_DEFECTO_CONTRATO=1` y verificar `NaN` en `total-estimado`. Anotar lo que no guste para la sección Mejoras.
-- [ ] **Step 6: Commit** `feat(demo): páginas mobile del cliente y del delivery`
+- [x] **Step 6: Commit** `feat(demo): páginas mobile del cliente y del delivery`
 
 ### Task 10: Panel central, README y vista HTML de la etapa
 

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrega · Delivery demo</title>
+  <link rel="stylesheet" href="/estaticos/estilos.css">
+</head>
+<body>
+  <header>
+    <h1>Entrega <span id="numero"></span></h1>
+    <p>Delivery demo · página del delivery</p>
+  </header>
+  <main>
+    <p class="mensaje-error" data-testid="msg-error" role="alert" hidden></p>
+
+    <section>
+      <h2>Estado</h2>
+      <span class="estado" data-testid="estado-pedido">…</span>
+      <p class="ayuda" id="estado-texto"></p>
+    </section>
+
+    <section>
+      <h2>Llevar a</h2>
+      <p data-testid="direccion-entrega">…</p>
+      <p class="ayuda" id="punto"></p>
+      <ul class="lista" id="items"></ul>
+    </section>
+
+    <!-- Pasos 8, 10 y 12. Solo se muestra el botón que corresponde al estado.
+         El delivery no cancela: si no puede entregar, avisa al servicio. -->
+    <section id="sec-acciones">
+      <button type="button" data-testid="btn-retirado" hidden>Retiré el pedido</button>
+      <button type="button" data-testid="btn-en-puerta" hidden>Llegué a la puerta</button>
+      <button type="button" data-testid="btn-entregado" hidden>Entregué el pedido</button>
+      <p class="ayuda" id="sin-acciones" hidden>No hay nada para hacer en este estado.</p>
+    </section>
+  </main>
+
+  <script src="/estaticos/api.js"></script>
+  <script>
+    const $ = (t) => document.querySelector('[data-testid="' + t + '"]');
+    const id = idDelPedido();
+    document.getElementById("numero").textContent = "#" + id;
+
+    // Botón -> (ruta de la API, estados en los que se muestra).
+    const ACCIONES = {
+      "btn-retirado": ["retirado", ["ASIGNADO"]],
+      "btn-en-puerta": ["en-puerta", ["EN_CAMINO"]],
+      "btn-entregado": ["entregado", ["EN_PUERTA", "RECIBIDO"]],
+    };
+
+    function render(p) {
+      $("estado-pedido").textContent = p.estado;
+      document.getElementById("estado-texto").textContent = ESTADOS[p.estado] || "";
+      $("direccion-entrega").textContent = p.direccion || "(todavía sin dirección)";
+      document.getElementById("punto").textContent =
+        p.lat != null && p.lng != null ? "Punto marcado: " + p.lat + ", " + p.lng : "";
+      document.getElementById("items").replaceChildren(...p.items.map((i) => {
+        const li = document.createElement("li");
+        li.textContent = i.cantidad + " × " + i.nombre;
+        return li;
+      }));
+
+      let alguna = false;
+      for (const [testid, [, estados]] of Object.entries(ACCIONES)) {
+        const visible = estados.includes(p.estado) && !(testid === "btn-entregado" && p.entregado_delivery);
+        $(testid).hidden = !visible;
+        alguna = alguna || visible;
+      }
+      document.getElementById("sin-acciones").hidden = alguna;
+    }
+
+    for (const [testid, [ruta]] of Object.entries(ACCIONES)) {
+      $(testid).addEventListener("click", async () => {
+        limpiarError();
+        try {
+          aplicar(await api("POST", "/pedidos/" + id + "/" + ruta));
+        } catch (err) {
+          mostrarError(err);
+        }
+      });
+    }
+
+    const aplicar = seguirPedido(id, 3000, render);
+  </script>
+</body>
+</html>

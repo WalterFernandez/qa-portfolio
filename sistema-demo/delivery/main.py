@@ -1,13 +1,17 @@
 """Punto de entrada de la API del sistema demo de delivery."""
 
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from delivery import catalogo, db, rutas_pedidos
 from delivery.config import Config
 from delivery.estados import TransicionInvalida
 from delivery.pedidos import DatosInvalidos, FirmaRequerida, NoCancelable, PedidoNoEncontrado
 
+PAGINAS = Path(__file__).parent / "paginas"
 
 def crear_app(cfg: Config | None = None) -> FastAPI:
     cfg = cfg or Config.desde_entorno()
@@ -32,6 +36,22 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
         return catalogo.listar_platos(ctx)
 
     app.include_router(rutas_pedidos.router)
+
+    # Páginas: HTML + JS plano. Son cascarones: el id del pedido lo lee el JS de la
+    # URL y los datos (y los 404) llegan por la API, igual que en una app real.
+    app.mount("/estaticos", StaticFiles(directory=PAGINAS), name="estaticos")
+
+    @app.get("/", include_in_schema=False)
+    def inicio() -> FileResponse:
+        return FileResponse(PAGINAS / "inicio.html")
+
+    @app.get("/cliente/pedido/{pedido_id}", include_in_schema=False)
+    def pagina_cliente(pedido_id: int) -> FileResponse:
+        return FileResponse(PAGINAS / "cliente.html")
+
+    @app.get("/delivery/pedido/{pedido_id}", include_in_schema=False)
+    def pagina_delivery(pedido_id: int) -> FileResponse:
+        return FileResponse(PAGINAS / "delivery.html")
 
     # Las excepciones de dominio se traducen a HTTP en un solo lugar.
     @app.exception_handler(PedidoNoEncontrado)

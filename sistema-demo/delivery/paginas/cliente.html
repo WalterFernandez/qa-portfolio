@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tu pedido · Delivery demo</title>
+  <link rel="stylesheet" href="/estaticos/estilos.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+</head>
+<body>
+  <header>
+    <h1>Tu pedido <span id="numero"></span></h1>
+    <p>Delivery demo · página del cliente</p>
+  </header>
+  <main>
+    <p class="mensaje-error" data-testid="msg-error" role="alert" hidden></p>
+
+    <!-- Seguimiento: siempre visible. -->
+    <section>
+      <h2>Estado</h2>
+      <span class="estado" data-testid="estado-pedido">…</span>
+      <p class="ayuda" id="estado-texto"></p>
+      <!-- Paso 11: el cliente confirma que recibió el pedido. -->
+      <button type="button" data-testid="btn-recibido" hidden>Recibí mi pedido</button>
+      <!-- Solo antes de pagar. Sin confirm(): un diálogo nativo traba la automatización. -->
+      <button type="button" class="secundario" data-testid="btn-cancelar" hidden>Cancelar pedido</button>
+    </section>
+
+    <!-- Línea de tiempo tal como la ordena la API. Con DEMO_DEFECTO_ZONA_HORARIA=1
+         se ve desordenada (por ejemplo, PAGADO antes que COTIZADO): ver Paso 8. -->
+    <section>
+      <h2>Historial</h2>
+      <ol class="lista" data-testid="linea-de-tiempo"></ol>
+    </section>
+
+    <!-- Paso 4: carga de datos (estado LINK_ENVIADO). -->
+    <section id="sec-datos" hidden>
+      <h2>Armá tu pedido</h2>
+      <ul class="lista" id="platos"></ul>
+      <div class="fila-total">
+        <span>Total estimado</span>
+        <!-- Se calcula acá con precio * cantidad. Si la API manda el precio como texto
+             (defecto de contrato), la cuenta da NaN y queda a la vista. -->
+        <span data-testid="total-estimado">$ 0</span>
+      </div>
+
+      <label for="direccion">Dirección de entrega</label>
+      <input id="direccion" type="text" maxlength="200" autocomplete="street-address"
+             placeholder="Calle 123, piso y depto" data-testid="input-direccion">
+
+      <button type="button" class="secundario" data-testid="btn-ubicacion">Usar mi ubicación</button>
+      <div id="mapa" data-testid="mapa"></div>
+      <p class="coordenadas" id="coordenadas">Tocá el mapa para marcar el punto de entrega (opcional).</p>
+
+      <button type="button" data-testid="btn-confirmar-datos">Confirmar datos</button>
+    </section>
+
+    <!-- Paso 5-6: cotización, firma y pago (estado COTIZADO). -->
+    <section id="sec-cotizacion" hidden>
+      <h2>Tu cotización</h2>
+      <ul class="lista" id="resumen"></ul>
+      <div class="fila-total"><span>Total</span><span data-testid="total"></span></div>
+      <p class="ayuda">Demora estimada: <strong data-testid="demora"></strong></p>
+
+      <label for="firma">Firmá con el dedo para confirmar</label>
+      <canvas id="firma" data-testid="canvas-firma"></canvas>
+      <button type="button" class="secundario" data-testid="btn-limpiar-firma">Limpiar firma</button>
+      <!-- Sin deshabilitar en el clic: el doble pago lo resuelve el servidor (es idempotente)
+           y así se puede probar desde la página. -->
+      <button type="button" data-testid="btn-pagar">Pagar</button>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/estaticos/api.js"></script>
+  <script>
+    const $ = (t) => document.querySelector('[data-testid="' + t + '"]');
+    const id = idDelPedido();
+    document.getElementById("numero").textContent = "#" + id;
+
+    const CANCELABLES = ["INICIADO", "LINK_ENVIADO", "DATOS_CARGADOS", "COTIZADO"];
+    const PUEDE_CONFIRMAR = ["EN_PUERTA", "ENTREGADO"];
+    const TEXTOS_FINALES = {
+      CERRADO: "¡Gracias! El pedido quedó cerrado.",
+      CANCELADO: "El pedido fue cancelado.",
+    };
+
+    // ---------- Render según el estado ----------
+    function render(p) {
+      $("estado-pedido").textContent = p.estado;
+      document.getElementById("estado-texto").textContent =
+        TEXTOS_FINALES[p.estado] || ESTADOS[p.estado] || "";
+      $("btn-cancelar").hidden = !CANCELABLES.includes(p.estado);
+      $("btn-recibido").hidden = !PUEDE_CONFIRMAR.includes(p.estado) || p.recibido_cliente;
+
+      $("linea-de-tiempo").replaceChildren(...p.eventos.map((e) => {
+        const li = document.createElement("li");
+        const a = document.createElement("span");
+        a.textContent = e.estado + " · " + e.actor;
+        const b = document.createElement("span");
+        b.className = "precio";
+        b.textContent = e.ocurrido_en; // sin reformatear: así se ve si falta la zona
+        li.append(a, b);
+        return li;
+      }));
+
+      const enDatos = p.estado === "LINK_ENVIADO";
+      document.getElementById("sec-datos").hidden = !enDatos;
+      if (enDatos) prepararDatos();
+
+      const enCotizacion = p.estado === "COTIZADO";
+      document.getElementById("sec-cotizacion").hidden = !enCotizacion;
+      if (enCotizacion) mostrarCotizacion(p);
+    }
+
+    // ---------- Paso 4: carga de datos ----------
+    let platos = null;
+    let lat = null, lng = null;
+    let mapa = null, marcador = null;
+
+    async function prepararDatos() {
+      iniciarMapa();
+      if (platos) return;
+      try {
+        platos = await api("GET", "/platos");
+      } catch (err) {
+        mostrarError(err);
+        return;
+      }
+      document.getElementById("platos").replaceChildren(...platos.map((p) => {
+        const li = document.createElement("li");
+        const texto = document.createElement("label");
+        texto.htmlFor = "cant-" + p.id;
+        texto.style.margin = "0";
+        texto.innerHTML = "<span></span><br><span class='precio'></span>";
+        texto.children[0].textContent = p.nombre;
+        texto.children[2].textContent = pesos(p.precio);
+        const cant = document.createElement("input");
+        cant.type = "number";
+        cant.id = "cant-" + p.id;
+        cant.min = "0";
+        cant.max = "10";
+        cant.value = "0";
+        cant.inputMode = "numeric";
+        cant.dataset.testid = "cantidad-" + p.id;
+        cant.addEventListener("input", recalcular);
+        li.append(texto, cant);
+        return li;
+      }));
+      recalcular();
+    }
+
+    function itemsElegidos() {
+      return platos
+        .map((p) => ({ plato_id: p.id, cantidad: parseInt($("cantidad-" + p.id).value, 10) || 0 }))
+        .filter((i) => i.cantidad > 0);
+    }
+
+    function recalcular() {
+      let total = 0;
+      for (const i of itemsElegidos()) {
+        const plato = platos.find((p) => p.id === i.plato_id);
+        total += plato.precio * i.cantidad; // a propósito sin convertir: ver comentario en el HTML
+      }
+      $("total-estimado").textContent = pesos(total);
+    }
+
+    function fijarPunto(nuevoLat, nuevoLng) {
+      lat = Math.round(nuevoLat * 1e6) / 1e6;
+      lng = Math.round(nuevoLng * 1e6) / 1e6;
+      document.getElementById("coordenadas").textContent = "Punto de entrega: " + lat + ", " + lng;
+      if (!mapa) return;
+      if (marcador) marcador.setLatLng([lat, lng]);
+      else marcador = L.marker([lat, lng]).addTo(mapa);
+      mapa.setView([lat, lng], Math.max(mapa.getZoom(), 15));
+    }
+
+    function iniciarMapa() {
+      if (mapa) return;
+      if (!window.L) {
+        // Sin internet no carga Leaflet: el pedido se puede hacer igual, sin punto en el mapa.
+        document.getElementById("coordenadas").textContent =
+          "El mapa no está disponible (sin conexión a internet). Podés seguir sin marcar el punto.";
+        return;
+      }
+      mapa = L.map("mapa").setView([-34.6037, -58.3816], 12);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap",
+      }).addTo(mapa);
+      mapa.on("click", (e) => fijarPunto(e.latlng.lat, e.latlng.lng));
+      // La sección estaba oculta al crear el mapa: hay que recalcular su tamaño.
+      setTimeout(() => mapa.invalidateSize(), 0);
+    }
+
+    $("btn-ubicacion").addEventListener("click", () => {
+      limpiarError();
+      if (!navigator.geolocation) {
+        mostrarError({ status: -1, detail: { error: "sin_geolocalizacion" } });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fijarPunto(pos.coords.latitude, pos.coords.longitude),
+        // Por http desde otra máquina (no localhost) el navegador la bloquea.
+        () => mostrarError({ status: -1, detail: { error: "ubicacion_no_disponible" } }),
+        { enableHighAccuracy: true, timeout: 10000 },
+      );
+    });
+
+    $("btn-confirmar-datos").addEventListener("click", async () => {
+      limpiarError();
+      try {
+        aplicar(await api("PUT", "/pedidos/" + id, {
+          items: itemsElegidos(),
+          direccion: $("input-direccion").value.trim(),
+          lat: lat,
+          lng: lng,
+        }));
+      } catch (err) {
+        mostrarError(err);
+      }
+    });
+
+    // ---------- Pasos 5-6: cotización, firma y pago ----------
+    function mostrarCotizacion(p) {
+      document.getElementById("resumen").replaceChildren(...p.items.map((i) => {
+        const li = document.createElement("li");
+        const a = document.createElement("span");
+        a.textContent = i.cantidad + " × " + i.nombre;
+        const b = document.createElement("span");
+        b.className = "precio";
+        b.textContent = pesos(i.subtotal);
+        li.append(a, b);
+        return li;
+      }));
+      $("total").textContent = pesos(p.total);
+      $("demora").textContent = p.demora_min + " min";
+      prepararCanvas();
+    }
+
+    const canvas = $("canvas-firma");
+    const ctx2d = canvas.getContext("2d");
+    let hayTrazo = false;
+    let dibujando = false;
+    let envioFirma = null; // promesa del POST /firma del dibujo actual (una sola por dibujo)
+
+    function prepararCanvas() {
+      // El canvas mide en CSS lo que dice estilos.css; acá se ajusta su resolución real.
+      const escala = Math.min(window.devicePixelRatio || 1, 2); // tope: la firma no pasa de 200 KB
+      const r = canvas.getBoundingClientRect();
+      canvas.width = Math.round(r.width * escala);
+      canvas.height = Math.round(r.height * escala);
+      ctx2d.setTransform(escala, 0, 0, escala, 0, 0);
+      ctx2d.lineWidth = 2.5;
+      ctx2d.lineCap = "round";
+      ctx2d.lineJoin = "round";
+      ctx2d.strokeStyle = "#1f2328";
+      hayTrazo = false;
+      envioFirma = null;
+    }
+
+    function punto(e) {
+      const r = canvas.getBoundingClientRect();
+      return [e.clientX - r.left, e.clientY - r.top];
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      dibujando = true;
+      canvas.setPointerCapture(e.pointerId);
+      ctx2d.beginPath();
+      ctx2d.moveTo(...punto(e));
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!dibujando) return;
+      ctx2d.lineTo(...punto(e));
+      ctx2d.stroke();
+      hayTrazo = true;
+      envioFirma = null; // el dibujo cambió: hay que volver a mandarlo
+    });
+    canvas.addEventListener("pointerup", () => { dibujando = false; });
+    canvas.addEventListener("pointercancel", () => { dibujando = false; });
+
+    $("btn-limpiar-firma").addEventListener("click", () => {
+      ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      hayTrazo = false;
+      envioFirma = null;
+    });
+
+    $("btn-pagar").addEventListener("click", async () => {
+      limpiarError();
+      try {
+        // Sin trazo no se manda firma: el servidor responde 409 firma_requerida y se muestra.
+        // Con doble clic, los dos clics esperan el mismo envío de firma y después pagan:
+        // el segundo pago es idempotente (200, sin duplicar nada).
+        if (hayTrazo) {
+          envioFirma = envioFirma ||
+            api("POST", "/pedidos/" + id + "/firma", { imagen: canvas.toDataURL("image/png") });
+          await envioFirma;
+        }
+        aplicar(await api("POST", "/pedidos/" + id + "/pago"));
+      } catch (err) {
+        envioFirma = null;
+        mostrarError(err);
+      }
+    });
+
+    // ---------- Seguimiento ----------
+    $("btn-recibido").addEventListener("click", async () => {
+      limpiarError();
+      try {
+        aplicar(await api("POST", "/pedidos/" + id + "/recibido"));
+      } catch (err) {
+        mostrarError(err);
+      }
+    });
+
+    $("btn-cancelar").addEventListener("click", async () => {
+      limpiarError();
+      try {
+        aplicar(await api("POST", "/pedidos/" + id + "/cancelar", { por: "cliente" }));
+      } catch (err) {
+        mostrarError(err);
+      }
+    });
+
+    const aplicar = seguirPedido(id, 3000, render);
+  </script>
+</body>
+</html>

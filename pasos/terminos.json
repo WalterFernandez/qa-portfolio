@@ -6,7 +6,7 @@
     "3": ["transicion-estados", "cobertura-transiciones", "tdd", "prueba-componente", "riesgos", "adecuacion-funcional", "uml-estados", "http-409", "table-driven", "parametrizados", "fail-fast", "mutacion"],
     "4": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "http-404", "http-409", "http-422", "recuperabilidad", "iso8601", "e164", "validacion-entrada", "table-driven", "fail-fast", "doble-prueba", "reloj-inyectable", "parametrizados", "mutacion"],
     "5": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "riesgos", "http-409", "http-422", "integridad", "iso6709", "validacion-entrada", "dinero-enteros", "unit-of-work", "fail-fast", "table-driven", "parametrizados", "mutacion"],
-    "6": ["transicion-estados", "tabla-decision", "particiones", "valores-limite", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "metodos-idempotentes", "data-url", "integridad", "idempotencia", "validacion-entrada", "migracion-esquema", "unit-of-work", "fail-fast", "parametrizados", "mutacion"]
+    "6": ["transicion-estados", "tabla-decision", "particiones", "valores-limite", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "metodos-idempotentes", "data-url", "integridad", "idempotencia", "concurrencia-optimista", "validacion-entrada", "migracion-esquema", "unit-of-work", "fail-fast", "parametrizados", "mutacion"]
   },
   "terminos": {
     "tdd": {
@@ -105,7 +105,7 @@
         "2": "Riesgo: cobro incorrecto. Mitigación: el precio lo fija el servidor y se guarda en enteros.",
         "3": "Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago.",
         "5": "Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo.",
-        "6": "Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente; repetirlo responde lo mismo sin un segundo `PAGADO`."
+        "6": "Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente, también con dos pagos simultáneos. Riesgo conocido y aceptado: sin autenticación, quien conozca el id puede firmar o pagar (IDOR); queda para las pruebas de seguridad de una etapa posterior."
       }
     },
     "regresion": {
@@ -166,7 +166,13 @@
       "tipo": "bp", "titulo": "Operaciones idempotentes",
       "ref": "Idempotencia",
       "que": "Una operación idempotente puede repetirse muchas veces con el mismo resultado que si se hiciera una sola vez.",
-      "pasos": { "2": "La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos.", "6": "Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery." }
+      "pasos": { "2": "La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos.", "6": "Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery. También si los dos pagos llegan al mismo tiempo." }
+    },
+    "concurrencia-optimista": {
+      "tipo": "bp", "titulo": "Control de concurrencia optimista",
+      "ref": "Optimistic concurrency control; MITRE CWE-367 (TOCTOU)",
+      "que": "Entre leer un dato (*check*) y escribirlo (*use*) puede entrar otro proceso: es una condición de carrera TOCTOU. En vez de bloquear antes de leer, se escribe con una condición (`UPDATE ... WHERE estado = <el leído>`): si otro se adelantó, no cambia ninguna fila y se avisa del conflicto.",
+      "pasos": { "6": "`_avanzar` y `firmar` escriben con `AND estado = <el leído>`. Dos pagos simultáneos dejan un solo `PAGADO`; dos envíos simultáneos del formulario dan 200 y 409 en vez de un 500. Tres tests con dos hilos y una barrera lo reproducen siempre igual." }
     },
     "dinero-enteros": {
       "tipo": "bp", "titulo": "Dinero en unidades enteras",
@@ -232,7 +238,7 @@
       "tipo": "bp", "titulo": "Prueba de mutación",
       "ref": "Mutation testing",
       "que": "Se cambia el código a propósito (una *mutación*) y se verifica que algún test falle. Si ninguno falla, la suite tiene un hueco.",
-      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados." }
+      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7." }
     },
     "particiones": {
       "tipo": "istqb", "titulo": "Partición de equivalencia",

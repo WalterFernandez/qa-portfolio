@@ -6,12 +6,13 @@
 
 | Archivo | Qué contiene |
 |---|---|
-| `sistema-demo/delivery/pedidos.py` | `firmar(...)`: guarda la firma sin cambiar de estado (se puede volver a firmar antes de pagar). `pagar(...)`: avanza a `PAGADO`, avisa al delivery y avanza a `ASIGNADO`. Suma `FirmaRequerida` y `YA_PAGADOS` (los estados donde pagar no hace nada). |
+| `sistema-demo/delivery/pedidos.py` | `firmar(...)`: guarda la firma sin cambiar de estado (se puede volver a firmar antes de pagar). `pagar(...)`: avanza a `PAGADO`, avisa al delivery y avanza a `ASIGNADO`. Suma `FirmaRequerida` y `YA_PAGADOS` (los estados donde pagar no hace nada). Después: `_actualizar_si_sigue`, el `UPDATE` condicional contra la carrera (ver 2.1). |
 | `sistema-demo/delivery/rutas_pedidos.py` | Rutas `POST /pedidos/{id}/firma` (modelo `Firma`, patrón `FIRMA_PNG`, máximo `FIRMA_MAX = 200_000`) y `POST /pedidos/{id}/pago` (sin body). |
 | `sistema-demo/delivery/main.py` | Nuevo manejador: `FirmaRequerida` → **409** `{"detail": {"error": "firma_requerida"}}`. |
 | `sistema-demo/delivery/db.py` | Columna `firma TEXT` en `pedidos` y `COLUMNAS_NUEVAS`: al arrancar se agrega la columna a una base vieja que no la tiene. |
 | `sistema-demo/tests/conftest.py` | Constante `FIRMA_OK` y fixture `pedido_cotizado` (un pedido en `COTIZADO`). |
 | `sistema-demo/tests/test_pago.py` | 32 tests: camino feliz, idempotencia, formato de la firma, estados, existencia y base vieja. |
+| `sistema-demo/tests/test_concurrencia.py` | 3 tests con dos requests al mismo tiempo sobre el mismo pedido (ver 2.1). |
 
 **Qué pasa en `POST /pedidos/{id}/pago`** (pasos 6 y 7 del flujo de negocio, en una sola llamada):
 
@@ -49,6 +50,7 @@ cliente: POST /pedidos/1/pago
 | Estados | 5 | Pagar sin firma → 409 `firma_requerida` sin eventos ni mensajes. Pagar o firmar antes de cotizar → 409 `transicion_invalida`. Firmar después de pagar → 409. Pagar un `CANCELADO` → 409. |
 | Existencia | 2 | Firma y pago sobre el pedido 999 → 404. |
 | Base vieja | 1 | Una base sin la columna `firma` se completa al arrancar y se puede firmar. |
+| Concurrencia | 3 | Dos pagos simultáneos → los dos 200, un solo `PAGADO` y un solo aviso. Dos envíos simultáneos de los datos → 200 y 409 (no 500), sin items duplicados. Una firma que llega después del pago → 409 y no pisa la firma guardada. |
 
 ## 2. Por qué lo hicimos así
 
@@ -61,6 +63,19 @@ cliente: POST /pedidos/1/pago
 - **Migración aditiva:** `CREATE TABLE IF NOT EXISTS` no toca una tabla que ya existe, así que una base creada antes de este paso no tendría `firma`. Al arrancar, `db.py` revisa `PRAGMA table_info` y agrega la columna si falta. Un test lo prueba partiendo de una base sin la columna.
 - **El teléfono del delivery sale de la configuración** (`cfg.delivery_telefono`, ficticio): el pedido nunca lo trae.
 - **Prueba de mutación manual: 12 de 12.** Se metieron 12 defectos: sacar la idempotencia, sacar el chequeo de firma, invertir estado y firma, contar `CANCELADO` como pagado, firmar en cualquier estado, no guardar la imagen, no asignar, mandar el WhatsApp al cliente, actor del pago `servicio`, aceptar el prefijo sin datos, correr el límite en uno y sacar la migración. Todos rompieron al menos un test.
+
+### 2.1 Después del commit: la carrera del pago (TOCTOU)
+
+Una revisión de seguridad automática encontró un hueco que los 32 tests no veían, porque probaban la idempotencia **en secuencia**. Dos `POST /pago` que llegan al mismo tiempo leen los dos `COTIZADO` (*check*), los dos pasan y los dos escriben (*use*): dos `PAGADO`, dos `ASIGNADO` y dos avisos al delivery. Es una condición de carrera *time-of-check to time-of-use* (CWE-367).
+
+- **Primero el test en rojo.** `test_concurrencia.py` manda dos requests desde dos hilos, cada uno con su app sobre la misma base, como dos procesos. Para que la carrera no dependa de la suerte, una barrera (`threading.Barrier`) frena a cada request justo después de leer el estado y lo suelta cuando llegaron los dos. Los tres tests fallaron por la razón esperada: dos `PAGADO`, un `IntegrityError` (500) en la carga de datos y una firma que pisaba la de un pedido ya pagado.
+- **El arreglo: control de concurrencia optimista.** Toda escritura que depende del estado va con `AND estado = <el leído>` (`_actualizar_si_sigue`). Si otro request se adelantó, el `UPDATE` no cambia ninguna fila: se relee el estado real y da 409 `transicion_invalida` con ese estado. Como `_avanzar` lo usa, lo heredan todas las transiciones (también las del Paso 7).
+- **El pago sigue siendo idempotente:** si el `UPDATE` pierde la carrera y el pedido ya está pagado, `pagar` devuelve 200 igual que con el doble clic en secuencia.
+- **La carga de datos "toma" el pedido primero:** `_avanzar(DATOS_CARGADOS)` va antes de insertar los items, así el segundo envío da 409 en vez de chocar con la clave `(pedido_id, plato_id)`.
+- **¿Por qué no bloquear con `BEGIN IMMEDIATE`?** También funcionaría, pero serializa cada request de escritura aunque toquen pedidos distintos. La condición en el `UPDATE` solo frena cuando dos requests pelean por el mismo pedido.
+- **Mutación del arreglo: 7 de 7.** Sacar la condición del `UPDATE`, ignorar `rowcount`, informar el estado leído en vez del real, responder 409 al pago concurrente, mirar el conjunto equivocado, firmar sin condición y volver a insertar antes de avanzar: todos rompieron al menos un test.
+
+**Riesgo conocido, aceptado (IDOR):** la API no tiene autenticación, así que cualquiera que conozca el id de un pedido puede firmarlo o pagarlo (*Insecure Direct Object Reference*, OWASP API1:2023). El demo usa datos ficticios y la spec no pide usuarios. Queda anotado para las pruebas de seguridad de una etapa posterior (por ejemplo, un token por pedido en el link).
 
 ## 3. Cómo se conecta con el proyecto
 
@@ -94,6 +109,7 @@ ASIGNADO ──► (Paso 7) el delivery retira, va en camino, llega a la puerta 
 | Firma como `data:image/png;base64,...` | 📐 Norma | [RFC 2397 (*data URL*) y RFC 4648 (base64)](glosario.md#data-url) |
 | Un pago o una firma rechazados no dejan nada | 📐 Norma | [ISO/IEC 25010 — Seguridad › *Integridad*](glosario.md#integridad) |
 | Pagar dos veces = pagar una vez | ✅ Buena práctica | [Operaciones idempotentes](glosario.md#idempotencia) |
+| Dos pagos al mismo tiempo: uno escribe, el otro ve que ya está pagado | ✅ Buena práctica | [Control de concurrencia optimista (CWE-367)](glosario.md#concurrencia-optimista) |
 | Patrón de la firma y nada de campos de más | ✅ Buena práctica | [OWASP *Input Validation Cheat Sheet* (lista blanca)](glosario.md#validacion-entrada) |
 | La columna `firma` se agrega a una base vieja al arrancar | ✅ Buena práctica | [Migraciones de esquema aditivas](glosario.md#migracion-esquema) |
 | Pago, mensaje y asignación en una sola transacción | ✅ Buena práctica | [Patrón *Unit of Work*](glosario.md#unit-of-work) |
@@ -105,8 +121,9 @@ ASIGNADO ──► (Paso 7) el delivery retira, va en camino, llega a la puerta 
 
 ```bash
 cd sistema-demo
-.venv/Scripts/python -m pytest -q                      # 126 tests en verde (94 previos + 32 nuevos)
+.venv/Scripts/python -m pytest -q                      # 129 tests en verde (94 previos + 32 + 3 de concurrencia)
 .venv/Scripts/python -m pytest tests/test_pago.py -v   # cada estado y cada formato por nombre
+.venv/Scripts/python -m pytest tests/test_concurrencia.py -v   # las 3 carreras
 ```
 
 Probarlo a mano (con el servidor levantado, `uvicorn delivery.main:app`, y el pedido 1 ya cotizado como en el Paso 5):
@@ -123,4 +140,4 @@ curl -s "localhost:8000/mensajes?destino=delivery&pedido_id=1"   # un solo aviso
 
 ## 6. En términos técnicos (para entrevista)
 
-> "Implementé el pago como una operación idempotente del lado del servidor: `POST` no lo es por RFC 9110, así que si el pedido ya está pagado o más adelante la ruta devuelve el pedido sin registrar otro evento ni volver a avisar al delivery. Eso cubre el doble clic y los reintentos de red. La firma es una precondición del pago y no un estado propio. La valido por lista blanca como *data URL* PNG en base64, con un tope de largo. Diseñé los casos con una tabla de decisión de estado por firma, partición de equivalencia y valores límite sobre la imagen, y agregué la columna nueva con una migración aditiva que tiene su propio test. La prueba de mutación manual detectó 12 de 12 defectos."
+> "Implementé el pago como una operación idempotente del lado del servidor: `POST` no lo es por RFC 9110, así que si el pedido ya está pagado o más adelante la ruta devuelve el pedido sin registrar otro evento ni volver a avisar al delivery. Eso cubre el doble clic y los reintentos de red. La firma es una precondición del pago y no un estado propio. La valido por lista blanca como *data URL* PNG en base64, con un tope de largo. Diseñé los casos con una tabla de decisión de estado por firma, partición de equivalencia y valores límite sobre la imagen, y agregué la columna nueva con una migración aditiva que tiene su propio test. La prueba de mutación manual detectó 12 de 12 defectos. Después, una revisión encontró una condición de carrera TOCTOU: la idempotencia solo estaba probada en secuencia. La reproduje de forma determinista con dos hilos y una barrera, y la cerré con control de concurrencia optimista, un `UPDATE` condicionado al estado leído."

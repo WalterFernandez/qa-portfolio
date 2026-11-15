@@ -125,7 +125,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 3: fuente única de verdad y diseño *table-driven*, tests parametrizados, *fail fast*, prueba de mutación manual.
 - Paso 4: validación de entrada por lista blanca (OWASP), un solo camino para cambiar el estado, doble de prueba (*fake*) para el WhatsApp, reloj reemplazable, prueba de mutación (3 de 3).
 - Paso 5: el total lo calcula el servidor con el catálogo (fuente única), lista blanca contra `total`, dinero en enteros, validar todo antes de escribir (*fail fast*) en una sola transacción, prueba de mutación (6 de 6, con un caso sumado por una sobreviviente).
-- Paso 6: pago idempotente, firma por lista blanca, migración de esquema aditiva, pago y asignación en una sola transacción, primero el estado y después la firma (*fail fast*), prueba de mutación (12 de 12).
+- Paso 6: pago idempotente, firma por lista blanca, migración de esquema aditiva, pago y asignación en una sola transacción, primero el estado y después la firma (*fail fast*), control de concurrencia optimista contra la carrera del pago, prueba de mutación (12 de 12 y 7 de 7).
 
 ---
 
@@ -214,7 +214,7 @@ Priorizar qué probar según la probabilidad y el impacto de que algo salga mal.
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Riesgo: cobro incorrecto. Mitigación: el precio lo fija el servidor y se guarda en enteros.
 - [Paso 3](paso-03-maquina-de-estados.md): Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo.
-- [Paso 6](paso-06-firma-pago-y-asignacion.md): Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente; repetirlo responde lo mismo sin un segundo `PAGADO`.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente, también con dos pagos simultáneos. Riesgo conocido y aceptado: sin autenticación, quien conozca el id puede firmar o pagar (IDOR); queda para las pruebas de seguridad de una etapa posterior.
 
 <a id="regresion"></a>
 
@@ -660,7 +660,19 @@ Una operación idempotente puede repetirse muchas veces con el mismo resultado q
 **En este proyecto:**
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): La siembra solo carga platos si la tabla está vacía: diez reinicios siguen dando 4 platos.
-- [Paso 6](paso-06-firma-pago-y-asignacion.md): Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): Pagar dos veces responde 200 con el mismo pedido: un solo `PAGADO` y un solo WhatsApp al delivery. También si los dos pagos llegan al mismo tiempo.
+
+<a id="concurrencia-optimista"></a>
+
+#### Control de concurrencia optimista
+
+✅ Buena práctica · **Referencia:** Optimistic concurrency control; MITRE CWE-367 (TOCTOU)
+
+Entre leer un dato (*check*) y escribirlo (*use*) puede entrar otro proceso: es una condición de carrera TOCTOU. En vez de bloquear antes de leer, se escribe con una condición (`UPDATE ... WHERE estado = <el leído>`): si otro se adelantó, no cambia ninguna fila y se avisa del conflicto.
+
+**En este proyecto:**
+
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): `_avanzar` y `firmar` escriben con `AND estado = <el leído>`. Dos pagos simultáneos dejan un solo `PAGADO`; dos envíos simultáneos del formulario dan 200 y 409 en vez de un 500. Tres tests con dos hilos y una barrera lo reproducen siempre igual.
 
 <a id="dinero-enteros"></a>
 
@@ -732,7 +744,7 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 - [Paso 3](paso-03-maquina-de-estados.md): Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): 3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.
-- [Paso 6](paso-06-firma-pago-y-asignacion.md): 12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados.
+- [Paso 6](paso-06-firma-pago-y-asignacion.md): 12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.
 
 <a id="validacion-entrada"></a>
 

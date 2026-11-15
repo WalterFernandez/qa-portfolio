@@ -2,11 +2,15 @@
 
 Toda mutación de estado pasa por `_avanzar`, que valida la transición contra la
 máquina de estados y deja un evento con su marca de tiempo.
+
+Concurrencia: entre leer el estado y escribirlo puede entrar otro request (TOCTOU).
+Por eso toda escritura que depende del estado va con `AND estado = <el leído>`
+(`_actualizar_si_sigue`): si otro se adelantó, no cambia ninguna fila y da 409.
 """
 
 from delivery import catalogo, mensajes, reloj
 from delivery.db import Ctx
-from delivery.estados import CANCELABLES, Estado, validar_transicion
+from delivery.estados import CANCELABLES, Estado, TransicionInvalida, validar_transicion
 
 
 class PedidoNoEncontrado(Exception):
@@ -57,10 +61,26 @@ def _registrar_evento(ctx: Ctx, pedido_id: int, estado: Estado, actor: str) -> N
     )
 
 
+def _actualizar_si_sigue(
+    ctx: Ctx, pedido_id: int, leido: Estado, destino: Estado, columnas: str, valores: tuple
+) -> None:
+    """UPDATE que solo se aplica si el pedido sigue en el estado `leido`.
+
+    Si otro request lo cambió entre la lectura y esta escritura, no toca ninguna
+    fila: se relee el estado real y se rechaza como transición inválida.
+    """
+    cur = ctx.con.execute(
+        f"UPDATE pedidos SET {columnas} WHERE id = ? AND estado = ?",
+        (*valores, pedido_id, leido),
+    )
+    if cur.rowcount == 0:
+        raise TransicionInvalida(Estado(_fila(ctx, pedido_id)["estado"]), destino)
+
+
 def _avanzar(ctx: Ctx, pedido_id: int, destino: Estado, actor: str) -> None:
     actual = Estado(_fila(ctx, pedido_id)["estado"])
     validar_transicion(actual, destino)
-    ctx.con.execute("UPDATE pedidos SET estado = ? WHERE id = ?", (destino, pedido_id))
+    _actualizar_si_sigue(ctx, pedido_id, actual, destino, "estado = ?", (destino,))
     _registrar_evento(ctx, pedido_id, destino, actor)
 
 
@@ -105,6 +125,9 @@ def cargar_datos(
     if any(plato_id not in precios for plato_id in ids):
         raise DatosInvalidos("plato_inexistente")
 
+    # Primero se "toma" el pedido (UPDATE condicional): un segundo envío simultáneo
+    # del formulario da 409 acá, antes de chocar con la clave de pedido_items.
+    _avanzar(ctx, pedido_id, Estado.DATOS_CARGADOS, "cliente")
     ctx.con.executemany(
         "INSERT INTO pedido_items (pedido_id, plato_id, cantidad, precio_unitario)"
         " VALUES (?, ?, ?, ?)",
@@ -114,7 +137,6 @@ def cargar_datos(
         "UPDATE pedidos SET direccion = ?, lat = ?, lng = ? WHERE id = ?",
         (direccion, lat, lng, pedido_id),
     )
-    _avanzar(ctx, pedido_id, Estado.DATOS_CARGADOS, "cliente")
 
     total = sum(cantidad * precios[plato_id] for plato_id, cantidad in items)
     demora_min = calcular_demora(sum(cantidad for _, cantidad in items))
@@ -136,9 +158,10 @@ def firmar(ctx: Ctx, pedido_id: int, imagen: str) -> None:
     valida la transición a PAGADO. Volver a firmar antes de pagar reemplaza la firma.
     El formato de `imagen` ya lo validó la ruta.
     """
-    validar_transicion(Estado(_fila(ctx, pedido_id)["estado"]), Estado.PAGADO)
-    ctx.con.execute(
-        "UPDATE pedidos SET firmado = 1, firma = ? WHERE id = ?", (imagen, pedido_id)
+    actual = Estado(_fila(ctx, pedido_id)["estado"])
+    validar_transicion(actual, Estado.PAGADO)
+    _actualizar_si_sigue(
+        ctx, pedido_id, actual, Estado.PAGADO, "firmado = 1, firma = ?", (imagen,)
     )
 
 
@@ -156,7 +179,14 @@ def pagar(ctx: Ctx, pedido_id: int) -> None:
     if not fila["firmado"]:
         raise FirmaRequerida()
 
-    _avanzar(ctx, pedido_id, Estado.PAGADO, "cliente")
+    try:
+        _avanzar(ctx, pedido_id, Estado.PAGADO, "cliente")
+    except TransicionInvalida:
+        # Otro request pagó entre nuestra lectura y nuestra escritura: mismo caso
+        # que el doble clic, no es un error.
+        if Estado(_fila(ctx, pedido_id)["estado"]) in YA_PAGADOS:
+            return
+        raise
     link = f"/delivery/pedido/{pedido_id}"
     mensajes.enviar(
         ctx, pedido_id, "delivery", ctx.cfg.delivery_telefono,

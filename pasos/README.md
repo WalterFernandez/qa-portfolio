@@ -9,6 +9,8 @@ Bitácora de construcción del sistema demo "delivery de comidas" (ficticio). Ha
 
 > Prácticas alineadas al syllabus ISTQB CTFL v4.0.
 
+**Versión visual:** [`pasos.html`](pasos.html). Se abre con doble clic. El botón **▶ Presentación** (o la tecla `P`) lo pasa a diapositivas a pantalla completa: ← → para avanzar y `Esc` para salir.
+
 ## Leyenda de etiquetas
 
 | Etiqueta | Significado |

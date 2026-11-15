@@ -1,0 +1,15 @@
+# Notas privadas y de trabajo (no se publican)
+thoughts/
+Notas_Porfolio.txt
+qa-portfolio-plan.md
+.superpowers/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Datos y secretos
+*.db
+.env

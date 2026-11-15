@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA Portfolio Mockup</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f0f2f5; --text: #1b1f24; --muted: #5f6b7a;
+    --border: #dde2e8; --accent: #2f6fde; --accent-soft: #e6eefc;
+    --ok: #1f8f50; --ok-soft: #e3f4ea; --warn: #b26b00; --warn-soft: #fcf0dc; --fail: #c83a3a; --fail-soft: #fbe5e5;
+    --bar-ok: #3aa86b; --bar-warn: #e09a2b; --bar-fail: #d65252;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151a; --surface: #1a1f26; --surface-2: #222833; --text: #e7ebf0; --muted: #9aa5b3;
+      --border: #2e3641; --accent: #6f9ef5; --accent-soft: #1e2b44;
+      --ok: #5fcf8f; --ok-soft: #173326; --warn: #f0b45a; --warn-soft: #3a2c14; --fail: #f07a7a; --fail-soft: #3d1c1c;
+      --bar-ok: #4cbf7f; --bar-warn: #e8a842; --bar-fail: #e86a6a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151a; --surface: #1a1f26; --surface-2: #222833; --text: #e7ebf0; --muted: #9aa5b3;
+    --border: #2e3641; --accent: #6f9ef5; --accent-soft: #1e2b44;
+    --ok: #5fcf8f; --ok-soft: #173326; --warn: #f0b45a; --warn-soft: #3a2c14; --fail: #f07a7a; --fail-soft: #3d1c1c;
+    --bar-ok: #4cbf7f; --bar-warn: #e8a842; --bar-fail: #e86a6a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  .mock-flag { background: var(--warn-soft); color: var(--warn); text-align: center; font-size: 13px; padding: 6px 16px; }
+  header { padding: 28px 0 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
+  header p { margin: 6px 0 0; color: var(--muted); max-width: 620px; }
+  .links { display: flex; gap: 8px; }
+  .links a { color: var(--accent); text-decoration: none; font-size: 14px; border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; background: var(--surface); }
+  .theme-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 14px; }
+
+  .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 20px 0 24px; }
+  .mod { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .mod:hover { border-color: var(--accent); }
+  .mod:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .mod[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+  .mod h2 { margin: 0 0 4px; font-size: 16px; }
+  .mod p { margin: 0; color: var(--muted); font-size: 13px; }
+  .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; margin-top: 10px; font-weight: 500; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.fail { background: var(--fail-soft); color: var(--fail); }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 40px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .panel-head h3 { margin: 0; font-size: 19px; }
+  .panel-head .meta { color: var(--muted); font-size: 13px; }
+  .shows { color: var(--muted); margin: 6px 0 0; font-size: 14px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 18px 0; }
+  .kpi { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+  .kpi b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .kpi span { color: var(--muted); font-size: 12px; }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .col { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .col h4 { margin: 0 0 2px; font-size: 14px; display: flex; justify-content: space-between; }
+  .col h4 small { color: var(--muted); font-weight: 400; }
+  .col .thr { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .row { margin: 8px 0; }
+  .row .lbl { display: flex; justify-content: space-between; font-size: 13px; gap: 8px; }
+  .row .lbl code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .track { position: relative; height: 8px; background: var(--surface-2); border-radius: 4px; margin-top: 4px; }
+  .fill { height: 100%; border-radius: 4px; }
+  .fill.ok { background: var(--bar-ok); } .fill.warn { background: var(--bar-warn); } .fill.fail { background: var(--bar-fail); }
+  .mark { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--text); opacity: .45; }
+  .st { font-size: 11px; margin-left: 4px; }
+  .st.warn { color: var(--warn); } .st.fail { color: var(--fail); }
+
+  .improve { margin-top: 18px; border-left: 3px solid var(--warn); background: var(--warn-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; }
+  .improve h4 { margin: 0 0 4px; font-size: 14px; color: var(--warn); }
+  .improve ul { margin: 0; padding-left: 18px; font-size: 14px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 12px; margin-top: 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+</style>
+</head>
+<body>
+<div class="mock-flag">Mockup: todos los números y textos son de ejemplo</div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Walter Fernández Baez — QA Automation</h1>
+      <p>12 años asegurando la calidad de productos reales. Web, API, mobile, performance y testing asistido por IA: cada módulo muestra qué probé, por qué y qué mejoraría.</p>
+    </div>
+    <div class="links">
+      <a href="#" onclick="return false">GitHub</a><a href="#" onclick="return false">LinkedIn</a><a href="#" onclick="return false">CV</a>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Cambiar tema">◐</button>
+    </div>
+  </header>
+
+  <nav class="modules" id="modules" aria-label="Módulos"></nav>
+
+  <section class="panel" id="panel" aria-live="polite"></section>
+</div>
+
+<script>
+const MODULES = {
+  web: {
+    icon: "🌐", name: "Web", tag: "Playwright + Python",
+    card: "SauceDemo: login, inventario, carrito y checkout. Page Object Model.",
+    status: ["ok", "Activo"],
+    shows: "Diseño de suite E2E con POM, separación smoke/regresión y casos negativos con usuarios problemáticos.",
+    meta: "Última corrida: hoy 09:42 · rama main · #128",
+    kpis: [["48", "tests"], ["97,9%", "pasados"], ["1m 42s", "duración total"], ["1", "inestable"]],
+    unit: "s",
+    cols: [
+      { title: "Login", sub: "8 tests", thr: 5, rows: [["login válido", 2.1], ["usuario bloqueado", 1.4], ["password vacío", 1.2], ["problem_user", 4.2]] },
+      { title: "Carrito", sub: "14 tests", thr: 5, rows: [["agregar 1 ítem", 2.8], ["agregar 6 ítems", 4.6], ["quitar ítem", 2.2], ["persistencia al recargar", 5.9, "fail"]] },
+      { title: "Checkout", sub: "12 tests", thr: 8, rows: [["checkout completo", 6.4], ["datos faltantes", 3.1], ["total con impuestos", 5.2], ["cancelar compra", 2.7]] }
+    ],
+    improve: ["Agregar tests visuales (comparación de screenshots)", "Paralelizar con pytest-xdist", "Investigar el test inestable de persistencia del carrito"]
+  },
+  api: {
+    icon: "🔌", name: "API", tag: "Postman + pytest",
+    card: "JSONPlaceholder: CRUD, códigos de error y validación de contratos JSON.",
+    status: ["ok", "Activo"],
+    shows: "Tests funcionales por método HTTP, validación de JSON schema y tiempos de respuesta contra un umbral.",
+    meta: "Última corrida: hoy 09:42 · rama main · #128",
+    kpis: [["62", "tests"], ["100%", "pasados"], ["148 ms", "tiempo promedio"], ["0", "contratos rotos"]],
+    unit: "ms",
+    cols: [
+      { title: "GET", sub: "4 endpoints", thr: 300, rows: [["/posts", 112], ["/posts/1", 86], ["/users", 98], ["/comments?postId=1", 131]] },
+      { title: "POST", sub: "2 endpoints", thr: 300, rows: [["/posts", 245], ["/comments", 268]] },
+      { title: "PUT / PATCH", sub: "2 endpoints", thr: 300, rows: [["PUT /posts/1", 198], ["PATCH /posts/1", 176]] },
+      { title: "DELETE", sub: "1 endpoint", thr: 300, rows: [["/posts/1", 142]] }
+    ],
+    improve: ["Sumar autenticación con reqres.in (API key)", "Generar los schemas desde una especificación OpenAPI", "Correr la colección Postman con Newman en CI"]
+  },
+  mobile: {
+    icon: "📱", name: "Mobile", tag: "Appium + Python",
+    card: "App Android de prueba: smoke de login, catálogo y carrito. Migración a TS.",
+    status: ["warn", "En progreso"],
+    shows: "Smoke mobile con emulador Android, más las llamadas de red que hace la app y sus tiempos.",
+    meta: "Última corrida: ayer 18:10 · rama develop · #121",
+    kpis: [["12", "tests"], ["83,3%", "pasados"], ["4m 05s", "duración total"], ["2", "fallidos"]],
+    unit: "ms",
+    cols: [
+      { title: "GET (app)", sub: "llamadas de red", thr: 400, rows: [["/catalog", 180], ["/profile", 150], ["/cart", 205]] },
+      { title: "POST (app)", sub: "llamadas de red", thr: 400, rows: [["/login", 420, "warn"], ["/cart/items", 310], ["/checkout", 690, "fail"]] },
+      { title: "Pantallas", sub: "tiempo de carga", thr: 3000, rows: [["Login", 2100], ["Catálogo", 3400, "warn"], ["Detalle", 1800], ["Carrito", 2300]] }
+    ],
+    improve: ["Correr en un segundo dispositivo (tablet)", "Migrar a WebdriverIO + TypeScript", "Revisar POST /checkout: supera el umbral"]
+  },
+  perf: {
+    icon: "⚡", name: "Performance", tag: "JMeter",
+    card: "Planes de carga y estrés con umbrales por endpoint.",
+    status: ["warn", "En progreso"],
+    shows: "Escenario de carga con ramp-up, percentiles de latencia y lectura de resultados contra objetivos.",
+    meta: "Última corrida: lun 22:00 · 50 usuarios · 10 min",
+    kpis: [["50", "usuarios virtuales"], ["38 req/s", "throughput"], ["0,4%", "errores"], ["420 ms", "p95 global"]],
+    unit: "ms",
+    cols: [
+      { title: "p50", sub: "mediana", thr: 500, rows: [["GET /posts", 140], ["POST /posts", 260], ["GET /users", 120]] },
+      { title: "p95", sub: "objetivo < 500 ms", thr: 500, rows: [["GET /posts", 380], ["POST /posts", 470, "warn"], ["GET /users", 310]] },
+      { title: "p99", sub: "colas", thr: 500, rows: [["GET /posts", 520, "warn"], ["POST /posts", 810, "fail"], ["GET /users", 450]] }
+    ],
+    improve: ["Agregar escenario de estrés (ramp hasta el quiebre)", "Publicar el reporte HTML de JMeter en CI", "Analizar la cola p99 de POST /posts"]
+  },
+  prime: {
+    icon: "🤖", name: "Prime", tag: "Concepto · IA",
+    card: "Analiza un repositorio y propone casos de prueba; yo los reviso y priorizo.",
+    status: ["ok", "Activo"],
+    shows: "Qué delego a la IA (proponer cobertura) y qué verifico yo (prioridad, datos, aserciones).",
+    meta: "Último análisis: hoy 08:30 · 3 módulos analizados",
+    kpis: [["67", "casos propuestos"], ["53", "aprobados"], ["14", "descartados"], ["79%", "tasa de aceptación"]],
+    unit: "casos",
+    cols: [
+      { title: "Propuestos", sub: "por la IA", rows: [["Web", 25], ["API", 30], ["Mobile", 12]] },
+      { title: "Aprobados", sub: "por mí", rows: [["Web", 18], ["API", 26], ["Mobile", 9]] },
+      { title: "Descartados", sub: "motivo", rows: [["duplicado", 6, "warn"], ["fuera de alcance", 5, "warn"], ["dato irreal", 3, "fail"]] }
+    ],
+    improve: ["Registrar por qué se descarta cada caso para mejorar los prompts", "Comparar cobertura antes y después de Prime", "Documentar el flujo con un diagrama"]
+  }
+};
+
+const STATUS_TXT = { warn: "⚠ cerca", fail: "✕ supera" };
+const fmt = (v, unit) => unit === "s" ? v.toFixed(1).replace(".", ",") + " s"
+  : unit === "ms" ? (v >= 1000 ? (v / 1000).toFixed(1).replace(".", ",") + " s" : v + " ms")
+  : v + " " + unit;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function renderCards(active) {
+  document.getElementById("modules").innerHTML = Object.entries(MODULES).map(([key, m]) => `
+    <button class="mod" type="button" data-key="${key}" aria-pressed="${key === active}">
+      <h2>${m.icon} ${esc(m.name)}</h2>
+      <p>${esc(m.card)}</p>
+      <span class="pill ${m.status[0]}">${esc(m.status[1])}</span>
+    </button>`).join("");
+}
+
+function renderPanel(key) {
+  const m = MODULES[key];
+  const max = Math.max(...m.cols.flatMap(c => c.rows.map(r => r[1]).concat(c.thr || 0)));
+  const cols = m.cols.map(c => `
+    <div class="col">
+      <h4>${esc(c.title)} <small>${esc(c.sub)}</small></h4>
+      <div class="thr">${c.thr ? "Umbral: " + fmt(c.thr, m.unit) : "&nbsp;"}</div>
+      ${c.rows.map(([label, v, st]) => {
+        st = st || "ok";
+        return `<div class="row">
+          <div class="lbl"><code title="${esc(label)}">${esc(label)}</code>
+            <span class="val">${fmt(v, m.unit)}${st !== "ok" ? `<span class="st ${st}">${STATUS_TXT[st]}</span>` : ""}</span></div>
+          <div class="track"><div class="fill ${st}" style="width:${(v / max * 100).toFixed(1)}%"></div>
+            ${c.thr ? `<div class="mark" style="left:${(c.thr / max * 100).toFixed(1)}%" title="umbral"></div>` : ""}</div>
+        </div>`;
+      }).join("")}
+    </div>`).join("");
+
+  document.getElementById("panel").innerHTML = `
+    <div class="panel-head"><h3>${m.icon} ${esc(m.name)} <span class="meta">· ${esc(m.tag)}</span></h3><span class="meta">${esc(m.meta)}</span></div>
+    <p class="shows"><b>Qué demuestra:</b> ${esc(m.shows)}</p>
+    <div class="kpis">${m.kpis.map(([v, l]) => `<div class="kpi"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("")}</div>
+    <div class="cols">${cols}</div>
+    <div class="legend">
+      <span><i style="background:var(--bar-ok)"></i>dentro del umbral</span>
+      <span><i style="background:var(--bar-warn)"></i>cerca del umbral</span>
+      <span><i style="background:var(--bar-fail)"></i>supera el umbral / falla</span>
+      <span><i style="background:var(--text);opacity:.45;width:2px"></i>línea de umbral</span>
+    </div>
+    <div class="improve"><h4>Mejoras</h4><ul>${m.improve.map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`;
+}
+
+function select(key) {
+  if (!MODULES[key]) key = "api";
+  renderCards(key); renderPanel(key);
+  try { history.replaceState(null, "", "#" + key); } catch (e) {}
+}
+
+document.getElementById("modules").addEventListener("click", e => {
+  const b = e.target.closest(".mod"); if (b) select(b.dataset.key);
+});
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+});
+select(location.hash.slice(1) || "api");
+</script>
+</body>
+</html>

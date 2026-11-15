@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flujo del pedido</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1d2330; --muted:#5d6678; --line:#dfe3ea;
+    --cli:#2563eb; --srv:#7c3aed; --del:#d97706; --state:#0f766e; --risk:#b91c1c;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#11141a; --card:#1a1f28; --ink:#e7eaf0; --muted:#9aa3b4; --line:#2b3240;
+      --cli:#60a5fa; --srv:#a78bfa; --del:#fbbf24; --state:#2dd4bf; --risk:#f87171; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+  main{max-width:1000px;margin:0 auto;padding:24px 16px 48px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .lanes{display:grid;grid-template-columns:44px 1fr 1fr 1fr 150px;gap:0;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .h{font-weight:600;padding:10px;border-bottom:2px solid var(--line);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+  .h.cli{color:var(--cli)} .h.srv{color:var(--srv)} .h.del{color:var(--del)} .h.st{color:var(--state)}
+  .c{padding:8px 10px;border-bottom:1px solid var(--line);min-height:44px;display:flex;align-items:center}
+  .n{color:var(--muted);font-variant-numeric:tabular-nums;justify-content:center}
+  .box{border-radius:7px;padding:6px 9px;font-size:14px;border-left:4px solid}
+  .box.cli{border-color:var(--cli);background:color-mix(in srgb,var(--cli) 10%,transparent)}
+  .box.srv{border-color:var(--srv);background:color-mix(in srgb,var(--srv) 10%,transparent)}
+  .box.del{border-color:var(--del);background:color-mix(in srgb,var(--del) 12%,transparent)}
+  .wa{font-size:11px;color:var(--muted);display:block}
+  .st{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--state);font-weight:600}
+  .risk{margin-top:28px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .r{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--risk);border-radius:8px;padding:12px}
+  .r b{display:block;margin-bottom:4px}
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted);margin:4px 4px 0 0}
+  h2{font-size:17px;margin:28px 0 0}
+  @media (max-width:720px){
+    .lanes{grid-template-columns:30px 1fr 1fr 1fr;font-size:13px}
+    .lanes .stc{display:none}
+    .box{font-size:12px;padding:5px 6px}
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Flujo del pedido — sistema demo (borrador)</h1>
+  <p class="sub">Basado en tu historia. Los nombres de estado son propuesta mía. WhatsApp se simula: los mensajes quedan en una “bandeja” consultable por API.</p>
+
+  <div class="lanes">
+    <div class="h">#</div><div class="h cli">Cliente</div><div class="h srv">Web / Servicio</div><div class="h del">Delivery</div><div class="h st stc">Estado</div>
+
+    <div class="c n">1</div><div class="c"></div><div class="c"><div class="box srv">Muestra catálogo (3–4 platos)</div></div><div class="c"></div><div class="c stc"><span class="st">—</span></div>
+    <div class="c n">2</div><div class="c"><div class="box cli">Deja su teléfono y envía el formulario</div></div><div class="c"></div><div class="c"></div><div class="c stc"><span class="st">INICIADO</span></div>
+    <div class="c n">3</div><div class="c"></div><div class="c"><div class="box srv">Envía link al cliente<span class="wa">WhatsApp (simulado)</span></div></div><div class="c"></div><div class="c stc"><span class="st">LINK_ENVIADO</span></div>
+    <div class="c n">4</div><div class="c"><div class="box cli">Carga cantidades y dirección, confirma pedido</div></div><div class="c"></div><div class="c"></div><div class="c stc"><span class="st">DATOS_CARGADOS</span></div>
+    <div class="c n">5</div><div class="c"></div><div class="c"><div class="box srv">Envía total y tiempo de demora</div></div><div class="c"></div><div class="c stc"><span class="st">COTIZADO</span></div>
+    <div class="c n">6</div><div class="c"><div class="box cli">Confirma pago y firma la lista del pedido</div></div><div class="c"></div><div class="c"></div><div class="c stc"><span class="st">PAGADO</span></div>
+    <div class="c n">7</div><div class="c"></div><div class="c"><div class="box srv">Recibe confirmación, envía dirección al delivery<span class="wa">WhatsApp (simulado)</span></div></div><div class="c"></div><div class="c stc"><span class="st">ASIGNADO</span></div>
+    <div class="c n">8</div><div class="c"></div><div class="c"></div><div class="c"><div class="box del">Confirma que tiene el pedido</div></div><div class="c stc"><span class="st">RETIRADO</span></div>
+    <div class="c n">9</div><div class="c"></div><div class="c"><div class="box srv">Avisa al cliente: pedido en camino<span class="wa">WhatsApp (simulado)</span></div></div><div class="c"></div><div class="c stc"><span class="st">EN_CAMINO</span></div>
+    <div class="c n">10</div><div class="c"></div><div class="c"></div><div class="c"><div class="box del">Avisa que llegó a la dirección</div></div><div class="c stc"><span class="st">EN_PUERTA</span></div>
+    <div class="c n">11</div><div class="c"><div class="box cli">Confirma que recibió la comida</div></div><div class="c"></div><div class="c"></div><div class="c stc"><span class="st">RECIBIDO</span></div>
+    <div class="c n">12</div><div class="c"></div><div class="c"></div><div class="c"><div class="box del">Avisa comida entregada</div></div><div class="c stc"><span class="st">ENTREGADO</span></div>
+    <div class="c n">13</div><div class="c"></div><div class="c"><div class="box srv">Cierra el pedido</div></div><div class="c"></div><div class="c stc"><span class="st">CERRADO</span></div>
+  </div>
+
+  <h2>Dónde está el riesgo (propuesta mía)</h2>
+  <div class="risk">
+    <div class="r"><b>Pasos 11 y 12: doble confirmación</b>¿Qué pasa si el delivery marca “entregado” y el cliente nunca confirmó? Verificación cruzada entre actores.
+      <br><span class="tag">ISTQB: transición de estados</span><span class="tag">ISO 25010: integridad</span></div>
+    <div class="r"><b>Pasos 5–6: total y pago</b>Total recalculado en el servidor, pago no duplicado si el cliente toca dos veces.
+      <br><span class="tag">ISTQB: pruebas basadas en riesgos</span><span class="tag">ISO 25010: confiabilidad</span></div>
+    <div class="r"><b>Línea de tiempo (defecto sembrado)</b>Local en AR, cliente en MX, servidor en EE.UU.: “PAGADO” aparece antes que “COTIZADO”.
+      <br><span class="tag">ISTQB: transición de estados</span><span class="tag">validación en BD</span></div>
+    <div class="r"><b>Pasos 3, 7, 9: mensajes</b>Cada mensaje al canal correcto, con el link/dirección correctos, una sola vez.
+      <br><span class="tag">ISTQB: pruebas de integración</span><span class="tag">ISO 25010: compatibilidad</span></div>
+    <div class="r"><b>Paso 4: valores límite</b>Cantidad 0, máximo por plato, dirección vacía o fuera de zona.
+      <br><span class="tag">ISTQB: valores límite + particiones</span></div>
+  </div>
+</main>
+</body>
+</html>

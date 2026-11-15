@@ -82,7 +82,7 @@ def test_salud_refleja_defecto_encendido(crear_cliente):
   - Tabla `eventos(id INTEGER PK, pedido_id, estado TEXT, actor TEXT, ocurrido_en TEXT)`; tabla `mensajes(id PK, pedido_id, destino TEXT, telefono TEXT, canal TEXT, texto TEXT, link TEXT, creado_en TEXT)`. Columnas de `pedidos`: ver el JSON de pedido en Task 4.
   - `catalogo.listar_platos(ctx) -> list[dict]` con `{"id", "nombre", "precio"}`; `catalogo.precios(ctx) -> dict[int, int]`.
 
-- [ ] **Step 1: Test que falla**
+- [x] **Step 1: Test que falla**
 
 ```python
 def test_catalogo_tiene_los_4_platos_sembrados(cliente):
@@ -101,10 +101,10 @@ def test_siembra_no_duplica_al_reiniciar(tmp_path):
     assert len(c.get("/platos").json()) == 4
 ```
 
-- [ ] **Step 2:** Correr → FAIL (404 en `/platos`).
-- [ ] **Step 3:** Implementar `db.py`, `catalogo.py` y la ruta `GET /platos`.
-- [ ] **Step 4:** Correr → PASS.
-- [ ] **Step 5: Commit** `feat(demo): base SQLite y catálogo`
+- [x] **Step 2:** Correr → FAIL (404 en `/platos`).
+- [x] **Step 3:** Implementar `db.py`, `catalogo.py` y la ruta `GET /platos`.
+- [x] **Step 4:** Correr → PASS.
+- [x] **Step 5: Commit** `feat(demo): base SQLite y catálogo`
 
 ### Task 3: Máquina de estados (unitaria, sin HTTP)
 

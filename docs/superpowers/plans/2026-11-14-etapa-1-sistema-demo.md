@@ -120,11 +120,11 @@ def test_siembra_no_duplica_al_reiniciar(tmp_path):
   - `validar_transicion(actual: Estado, destino: Estado) -> None` (lanza `TransicionInvalida`).
   - `CANCELABLES: frozenset[Estado]` = los 4 estados previos al pago.
 
-- [ ] **Step 1: Test que falla** — parametrizar todas las transiciones válidas de `TRANSICIONES` (no lanzan) y estos casos inválidos (lanzan `TransicionInvalida`): `INICIADO→COTIZADO` (salto), `PAGADO→COTIZADO` (retroceso), `PAGADO→CANCELADO`, `CERRADO→CANCELADO`, `CANCELADO→LINK_ENVIADO`, `EN_PUERTA→CERRADO` (cerrar sin confirmaciones). Más: `assert CANCELABLES == {Estado.INICIADO, Estado.LINK_ENVIADO, Estado.DATOS_CARGADOS, Estado.COTIZADO}`.
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar `estados.py`.
-- [ ] **Step 4:** Correr → PASS.
-- [ ] **Step 5: Commit** `feat(demo): máquina de estados del pedido`
+- [x] **Step 1: Test que falla** — parametrizar todas las transiciones válidas de `TRANSICIONES` (no lanzan) y estos casos inválidos (lanzan `TransicionInvalida`): `INICIADO→COTIZADO` (salto), `PAGADO→COTIZADO` (retroceso), `PAGADO→CANCELADO`, `CERRADO→CANCELADO`, `CANCELADO→LINK_ENVIADO`, `EN_PUERTA→CERRADO` (cerrar sin confirmaciones). Más: `assert CANCELABLES == {Estado.INICIADO, Estado.LINK_ENVIADO, Estado.DATOS_CARGADOS, Estado.COTIZADO}`.
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar `estados.py`.
+- [x] **Step 4:** Correr → PASS.
+- [x] **Step 5: Commit** `feat(demo): máquina de estados del pedido`
 
 ### Task 4: Crear pedido, reloj, eventos y bandeja de mensajes (pasos 1–3)
 

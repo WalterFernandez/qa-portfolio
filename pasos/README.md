@@ -27,6 +27,7 @@ Explicación completa de cada etiqueta, con dónde se aplica en el proyecto: [gl
 |---|---|---|
 | [1](paso-01-esqueleto-y-salud.md) | Esqueleto del proyecto, git y `GET /salud` | `feat(demo): esqueleto FastAPI con /salud` |
 | [2](paso-02-base-de-datos-y-catalogo.md) | Base SQLite y catálogo (`GET /platos`) | `feat(demo): base SQLite y catálogo` |
+| [3](paso-03-maquina-de-estados.md) | Máquina de estados del pedido | `feat(demo): máquina de estados del pedido` |
 
 ## Mapa general (hacia dónde vamos)
 
@@ -39,8 +40,8 @@ Cliente (página web / app)        Delivery (página)        Panel central
                          │
           ┌──────────────┼───────────────────────┐
           ▼              ▼                       ▼
-     catálogo       pedidos + estados       mensajes (WhatsApp simulado)
-     Paso 2         Pasos 3–7               Paso 4
+     catálogo       estados → pedidos       mensajes (WhatsApp simulado)
+     Paso 2         Paso 3    Pasos 4–7     Paso 4
           └──────────────┬───────────────────────┘
                          ▼
                  SQLite (db.py)          ◄── Paso 2

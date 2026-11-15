@@ -42,11 +42,13 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 y 2, el test se escribe antes que el código.
+- TDD y *shift-left*: pasos 1 a 3, el test se escribe antes que el código.
 - *Smoke test*: `GET /salud` (paso 1).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
-- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2).
-- Próximamente: transición de estados (paso 3), valores límite y particiones (paso 5), defectos sembrados (paso 8).
+- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3).
+- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3).
+- Prueba de componente (nivel unitario, sin HTTP ni base): paso 3.
+- Próximamente: valores límite y particiones (paso 5), defectos sembrados (paso 8).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
 
@@ -77,8 +79,9 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 
 ### Dónde lo aplicamos en este proyecto
 
-- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2).
-- RFC 9110: `GET` solo lee (paso 2). Próximamente: códigos 404, 409 y 422.
+- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3).
+- UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
+- RFC 9110: `GET` solo lee (paso 2). Próximamente: códigos 404, 409 (preparado en el paso 3) y 422.
 - OpenAPI 3.1: documentación automática en `/docs` (paso 1). En la etapa 2, contrato JSON Schema.
 - ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).
 
@@ -113,3 +116,4 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 
 - Paso 1: Twelve-Factor (configuración), Application Factory, FIRST, Conventional Commits, PEP 405.
 - Paso 2: OWASP (SQL parametrizado), 3FN, Unit of Work, inyección de dependencias, siembra idempotente, dinero en enteros.
+- Paso 3: fuente única de verdad y diseño *table-driven*, tests parametrizados, *fail fast*, prueba de mutación manual.

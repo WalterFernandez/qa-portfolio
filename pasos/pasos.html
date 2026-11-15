@@ -172,6 +172,7 @@
     <tr><th>Paso</th><th>Tema</th><th>Commit</th></tr>
     <tr><td>1</td><td>Esqueleto del proyecto, git y <code>GET /salud</code></td><td><code>feat(demo): esqueleto FastAPI con /salud</code></td></tr>
     <tr><td>2</td><td>Base SQLite y catálogo (<code>GET /platos</code>)</td><td><code>feat(demo): base SQLite y catálogo</code></td></tr>
+    <tr><td>3</td><td>Máquina de estados del pedido</td><td><code>feat(demo): máquina de estados del pedido</code></td></tr>
   </table></div>
 </section>
 
@@ -184,7 +185,7 @@
     <div class="down">▼</div>
     <div class="layer"><span class="node hl">API FastAPI — crear_app<small>Paso 1</small></span></div>
     <div class="down">▼</div>
-    <div class="layer"><span class="node hl">Catálogo<small>Paso 2</small></span><span class="node">Pedidos + estados<small>Pasos 3–7</small></span><span class="node">Mensajes (WhatsApp simulado)<small>Paso 4</small></span></div>
+    <div class="layer"><span class="node hl">Catálogo<small>Paso 2</small></span><span class="node hl">Estados<small>Paso 3</small></span><span class="node">Pedidos<small>Pasos 4–7</small></span><span class="node">Mensajes (WhatsApp simulado)<small>Paso 4</small></span></div>
     <div class="down">▼</div>
     <div class="layer"><span class="node hl">SQLite — db.py<small>Paso 2</small></span></div>
   </div>
@@ -383,11 +384,131 @@
   <p class="quote">"Modelé la persistencia en SQLite sin ORM, con el esquema protegido por restricciones (CHECK, FK, PK compuesta) y una transacción por request mediante inyección de dependencias. Los montos son enteros y los fija el servidor para eliminar el riesgo de que el cliente manipule el precio, que después cubro con pruebas basadas en riesgos. La siembra es idempotente y un test de reinicio lo garantiza."</p>
 </section>
 
+<!-- ===================== PASO 3 ===================== -->
+<section class="slide cover">
+  <div class="kicker">Paso 3</div>
+  <h1>Máquina de estados del pedido</h1>
+  <p class="lead">Por qué estados pasa un pedido y qué cambios están permitidos, en un solo lugar y probado con la técnica ISTQB de <strong>transición de estados</strong>, antes de que exista cualquier ruta HTTP.</p>
+</section>
+
+<section class="slide">
+  <div class="kicker">Paso 3 · Qué hicimos</div>
+  <h2>El diagrama de estados</h2>
+  <div class="flow">
+    <span class="node">INICIADO</span><span class="arrow">→</span>
+    <span class="node">LINK_ENVIADO</span><span class="arrow">→</span>
+    <span class="node">DATOS_CARGADOS</span><span class="arrow">→</span>
+    <span class="node">COTIZADO</span><span class="arrow">→</span>
+    <span class="node hl">PAGADO</span><span class="arrow">→</span>
+    <span class="node">ASIGNADO</span><span class="arrow">→</span>
+    <span class="node">RETIRADO</span><span class="arrow">→</span>
+    <span class="node">EN_CAMINO</span><span class="arrow">→</span>
+    <span class="node">EN_PUERTA</span>
+  </div>
+  <div class="flow">
+    <span class="node">Los 4 estados previos al pago<small>CANCELABLES</small></span><span class="arrow">→</span>
+    <span class="node">CANCELADO<small>final</small></span>
+  </div>
+  <div class="flow">
+    <span class="node">EN_PUERTA</span><span class="arrow">→</span>
+    <span class="node">RECIBIDO<small>confirma el cliente</small></span><span class="arrow">⇄</span>
+    <span class="node">ENTREGADO<small>confirma el delivery</small></span><span class="arrow">→</span>
+    <span class="node">CERRADO<small>final</small></span>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Archivo</th><th>Qué contiene</th></tr>
+    <tr><td><code>delivery/estados.py</code></td><td><code>Estado</code> (13 estados), <code>TRANSICIONES</code> (la tabla), <code>CANCELABLES</code>, <code>TransicionInvalida</code> y <code>validar_transicion</code>.</td></tr>
+    <tr><td><code>tests/test_estados.py</code></td><td>29 tests unitarios, sin HTTP ni base de datos.</td></tr>
+  </table></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Paso 3 · Qué probamos</div>
+  <h2>29 tests en cuatro grupos</h2>
+  <div class="tbl"><table>
+    <tr><th>Grupo</th><th>Cantidad</th><th>Qué verifica</th></tr>
+    <tr><td>Transiciones válidas</td><td>18</td><td>Cada flecha del diagrama se acepta.</td></tr>
+    <tr><td>Inválidas con nombre</td><td>6</td><td>Salto, retroceso, cancelar después de pagar, salir de <code>CERRADO</code>, salir de <code>CANCELADO</code>, cerrar sin confirmaciones. El error informa el estado actual y el destino.</td></tr>
+    <tr><td>Tabla completa</td><td>1</td><td>Los 13 × 13 = 169 pares: los 151 que no están en la tabla tienen que fallar.</td></tr>
+    <tr><td>Estructura</td><td>4</td><td>13 estados, exactamente 18 transiciones, finales sin salidas, <code>CANCELABLES</code> correcto.</td></tr>
+  </table></div>
+  <h3>Prueba de mutación manual</h3>
+  <p>Agregamos a propósito la flecha prohibida <code>EN_PUERTA → CERRADO</code>: la suite la detectó con <strong>2 tests en rojo</strong>. Después la sacamos. Así comprobamos que los tests no pasan "de casualidad".</p>
+</section>
+
+<section class="slide">
+  <div class="kicker">Paso 3 · Por qué</div>
+  <h2>Por qué lo hicimos así</h2>
+  <div class="grid">
+    <div class="card"><h4>Una sola fuente de verdad</h4><p>Las reglas viven en una tabla (<code>TRANSICIONES</code>), no repartidas en <code>if</code>. Desde el Paso 4, toda mutación pasa por <code>validar_transicion</code>.</p></div>
+    <div class="card"><h4>Primero la lógica, después HTTP</h4><p>Se prueba sola, en milisegundos. En el Paso 4, <code>TransicionInvalida</code> se traduce en un <strong>409 Conflict</strong>.</p></div>
+    <div class="card"><h4><code>StrEnum</code></h4><p>Es enum (el editor detecta errores de tipeo) y texto (<code>"PAGADO"</code>) a la vez: va a SQLite y al JSON tal cual.</p></div>
+    <div class="card"><h4>Error con datos</h4><p><code>TransicionInvalida</code> lleva <code>actual</code> y <code>destino</code>: el 409 va a decir exactamente qué se intentó.</p></div>
+    <div class="card"><h4>Cancelar solo antes de pagar</h4><p>Después del pago hay dinero y un delivery asignado. Ese riesgo queda bloqueado en la propia tabla.</p></div>
+    <div class="card"><h4>Dos confirmaciones para cerrar</h4><p>No alcanza con que el delivery diga "entregado": el cliente también tiene que confirmarlo.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Paso 3 · Cómo se conecta</div>
+  <h2>Cómo se conecta con el proyecto</h2>
+  <div class="flow">
+    <span class="node hl">estados.py</span><span class="arrow">→</span>
+    <span class="node">pedidos._avanzar<small>Paso 4</small></span><span class="arrow">→</span>
+    <span class="node">UPDATE pedidos.estado<small>+ INSERT en eventos</small></span>
+  </div>
+  <div class="flow">
+    <span class="node">TransicionInvalida</span><span class="arrow">→</span>
+    <span class="node">manejador en main.py</span><span class="arrow">→</span>
+    <span class="node">HTTP 409<small>transicion_invalida</small></span>
+  </div>
+  <ul>
+    <li><code>CANCELABLES</code>: cancelar solo en esos 4 estados (Pasos 6–7).</li>
+    <li><code>EN_PUERTA</code>, <code>RECIBIDO</code>, <code>ENTREGADO</code>: confirmaciones del cliente y del delivery (Paso 7).</li>
+    <li>La tabla <code>pedidos</code> guarda el estado como texto, y <code>Estado</code> es un texto. La tabla <code>eventos</code> registra cada transición aceptada.</li>
+    <li>En la etapa 2, las pruebas de API repiten algunos casos por HTTP (esperando 409), sin repetir los 169 pares: la cobertura fina queda en el nivel unitario, que es el más barato.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="kicker">Paso 3 · Normas y buenas prácticas</div>
+  <h2>Con qué se alinea</h2>
+  <div class="tbl"><table>
+    <tr><th>Qué</th><th>Tipo</th><th>Referencia</th></tr>
+    <tr><td>Diagrama y tabla de estados, casos válidos e inválidos</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §4.2.4 <em>Transición de estados</em></td></tr>
+    <tr><td>Cobertura de transiciones válidas (18/18) y de todas (169/169)</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §4.2.4, criterios de cobertura</td></tr>
+    <tr><td>Test antes del código (rojo → verde)</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §2.1.3 <em>Test-first</em> (TDD)</td></tr>
+    <tr><td>Lógica probada sola, sin HTTP ni base</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §2.2.1 <em>Prueba de componente</em></td></tr>
+    <tr><td>Bloquear cancelar después de pagar</td><td><span class="tag istqb">📘 ISTQB</span></td><td>CTFL v4.0 §5.2 <em>Pruebas basadas en riesgos</em></td></tr>
+    <tr><td>Transiciones correctas y completas</td><td><span class="tag norma">📐 Norma</span></td><td>ISO/IEC 25010 — Adecuación funcional › <em>Corrección</em>, <em>Completitud</em></td></tr>
+    <tr><td>Diagrama de máquina de estados</td><td><span class="tag norma">📐 Norma</span></td><td>UML 2.5 (OMG; también ISO/IEC 19505) — <em>State Machines</em></td></tr>
+    <tr><td>409 si el cambio choca con el estado (Paso 4)</td><td><span class="tag norma">📐 Norma</span></td><td>RFC 9110 §15.5.10 — <em>409 Conflict</em></td></tr>
+    <tr><td>Reglas en una tabla, no en <code>if</code> sueltos</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Fuente única de verdad; diseño <em>table-driven</em></td></tr>
+    <tr><td>Tests parametrizados</td><td><span class="tag bp">✅ Buena práctica</span></td><td><code>pytest.mark.parametrize</code>; FIRST</td></tr>
+    <tr><td>Excepción de dominio con datos</td><td><span class="tag bp">✅ Buena práctica</span></td><td><em>Fail fast</em> con errores descriptivos</td></tr>
+    <tr><td>Defecto metido a propósito</td><td><span class="tag bp">✅ Buena práctica</span></td><td>Prueba de mutación, hecha a mano</td></tr>
+  </table></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Paso 3 · Verificación</div>
+  <h2>Cómo se verifica y cómo contarlo</h2>
+<pre><code>cd sistema-demo
+.venv/Scripts/python -m pytest -q                        # 33 tests en verde
+.venv/Scripts/python -m pytest tests/test_estados.py -v  # cada transición por nombre</code></pre>
+<pre><code>&gt;&gt;&gt; from delivery.estados import Estado, validar_transicion
+&gt;&gt;&gt; validar_transicion(Estado.COTIZADO, Estado.PAGADO)     # válido: no pasa nada
+&gt;&gt;&gt; validar_transicion(Estado.PAGADO, Estado.CANCELADO)
+delivery.estados.TransicionInvalida: No se puede pasar de PAGADO a CANCELADO</code></pre>
+  <h3>En términos técnicos (para entrevista)</h3>
+  <p class="quote">"Modelé el ciclo de vida del pedido como una máquina de estados finita guiada por tablas, con una única función de validación por la que pasa toda mutación. La probé con la técnica de transición de estados de ISTQB a nivel de componente: 100 % de cobertura de transiciones válidas y de todas las transiciones (los 169 pares de la tabla), más casos inválidos con nombre como salto, retroceso y cancelar después de pagar. Para confirmar que la suite detecta defectos reales, hice una mutación manual con una transición prohibida y la suite falló como esperaba."</p>
+</section>
+
 <!-- Cierre -->
 <section class="slide cover">
   <div class="kicker">Próximo paso</div>
-  <h1>Paso 3: máquina de estados</h1>
-  <p class="lead">Las 13 transiciones del pedido, probadas con la técnica de <strong>transición de estados</strong> (ISTQB): toda transición inválida, salto o retroceso responde 409.</p>
+  <h1>Paso 4: crear pedido, reloj, eventos y WhatsApp simulado</h1>
+  <p class="lead">La primera ruta de pedidos: <code>POST /pedidos</code> crea el pedido, manda el link por el WhatsApp simulado y registra cada cambio de estado en el historial. Aparecen los códigos <strong>404</strong>, <strong>409</strong> y <strong>422</strong>.</p>
 </section>
 
 </main>
@@ -444,11 +565,13 @@
       <div class="here">
         <h3>Dónde lo aplicamos en este proyecto</h3>
         <ul>
-          <li>TDD y <em>shift-left</em>: pasos 1 y 2, el test se escribe antes que el código.</li>
+          <li>TDD y <em>shift-left</em>: pasos 1 a 3, el test se escribe antes que el código.</li>
           <li><em>Smoke test</em>: <code>GET /salud</code> (paso 1).</li>
           <li>Gestión de la configuración: versiones fijas y <code>.gitignore</code> (paso 1).</li>
-          <li>Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2).</li>
-          <li>Próximamente: transición de estados (paso 3), valores límite y particiones (paso 5), defectos sembrados (paso 8).</li>
+          <li>Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3).</li>
+          <li>Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3).</li>
+          <li>Prueba de componente (nivel unitario, sin HTTP ni base): paso 3.</li>
+          <li>Próximamente: valores límite y particiones (paso 5), defectos sembrados (paso 8).</li>
         </ul>
       </div>
       <p class="ref">Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.</p>
@@ -488,8 +611,9 @@
       <div class="here">
         <h3>Dónde lo aplicamos en este proyecto</h3>
         <ul>
-          <li>ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2).</li>
-          <li>RFC 9110: <code>GET</code> solo lee (paso 2). Próximamente: códigos 404, 409 y 422.</li>
+          <li>ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3).</li>
+          <li>UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).</li>
+          <li>RFC 9110: <code>GET</code> solo lee (paso 2). Próximamente: códigos 404, 409 (preparado en el paso 3) y 422.</li>
           <li>OpenAPI 3.1: documentación automática en <code>/docs</code> (paso 1). En la etapa 2, contrato JSON Schema.</li>
           <li>ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).</li>
         </ul>
@@ -526,6 +650,7 @@
         <ul>
           <li>Paso 1: Twelve-Factor (configuración), Application Factory, FIRST, Conventional Commits, PEP 405.</li>
           <li>Paso 2: OWASP (SQL parametrizado), 3FN, Unit of Work, inyección de dependencias, siembra idempotente, dinero en enteros.</li>
+          <li>Paso 3: fuente única de verdad y diseño <em>table-driven</em>, tests parametrizados, <em>fail fast</em>, prueba de mutación manual.</li>
         </ul>
       </div>
     </section>

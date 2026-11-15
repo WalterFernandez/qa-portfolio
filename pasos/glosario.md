@@ -41,8 +41,8 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 a 9, el test se escribe antes que el código.
-- *Smoke test*: `GET /salud` (paso 1); cada página responde y trae sus `data-testid` (paso 9).
+- TDD y *shift-left*: pasos 1 a 10, el test se escribe antes que el código.
+- *Smoke test*: `GET /salud` (paso 1); cada página responde y trae sus `data-testid` (paso 9), también el panel central (paso 10).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
 - Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5); un doble clic en “Pagar” no cobra dos veces (paso 6); el delivery no cierra sin la confirmación del cliente y no se cancela con el pago hecho, ni siquiera a la vez (paso 7); los defectos sembrados se eligieron por probabilidad e impacto: varias zonas horarias y clientes que esperan números (paso 8).
 - Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5); el pago recorre `COTIZADO → PAGADO → ASIGNADO` y firmar o pagar fuera de `COTIZADO` da 409 (paso 6); el recorrido `ASIGNADO → … → CERRADO` y las 6 transiciones del cierre en los dos órdenes (paso 7).
@@ -51,6 +51,7 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 - Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5); formato y largo de la firma (paso 6); quién cancela y un estado por tramo pagado (paso 7).
 - Tabla de decisión: estado × firma para el pago (paso 6); estado de partida × quién cancela (paso 7).
 - Defectos sembrados (*defect seeding*): zona horaria y contrato, apagados por defecto y activables por entorno; cada test con el defecto prendido tiene su par apagado como oráculo, y los 170 tests anteriores sirven de regresión (paso 8); los dos defectos se ven en la pantalla: `NaN` en el total estimado y el historial desordenado (paso 9).
+- Gestión de defectos: informes DEF-001 a DEF-003 con severidad, prioridad y causa raíz; el panel muestra qué defectos sembrados están prendidos. El DEF-003 es real: se cerró con un test de regresión y una ráfaga contra el servidor como prueba de confirmación (paso 10).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
 
@@ -84,13 +85,13 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 - ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 a 7), completitud: los 13 pasos del negocio (paso 7), interoperabilidad: el defecto de contrato manda texto donde se espera un número (paso 8) y la página muestra `NaN` (paso 9); capacidad de ser probado: `data-testid` fijos y errores con su código (paso 9).
 - UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
 - RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5); 409 `firma_requerida` y `POST /pago` idempotente aunque la norma no lo exija (paso 6); 404 en las 9 rutas de un pedido, 409 `no_cancelable` y 422 con `por` inválido (paso 7).
-- ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4); el defecto de zona horaria las guarda en hora local sin offset y la línea de tiempo se desordena (paso 8); la página del cliente la muestra sin reformatear (paso 9).
+- ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4); el defecto de zona horaria las guarda en hora local sin offset y la línea de tiempo se desordena (paso 8); la página del cliente la muestra sin reformatear (paso 9) y el panel central también; el DEF-001 lo documenta (paso 10).
 - W3C: Subresource Integrity para Leaflet, Geolocation API en contexto seguro y WCAG 2.2 (tamaño del objetivo táctil) en las páginas (paso 9).
 - ITU-T E.164: máximo de 15 dígitos en el teléfono (paso 4).
 - ISO 6709: latitud en [-90, 90] y longitud en [-180, 180] (paso 5).
 - RFC 2397 y RFC 4648: la firma como *data URL* PNG en base64 (paso 6).
 - OpenAPI 3.1: documentación automática en `/docs` (paso 1); `precio` y `total` son enteros en el contrato y el defecto de contrato lo rompe (paso 8). En la etapa 2, contrato JSON Schema.
-- ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).
+- ISO/IEC/IEEE 29119-3: informes de incidentes DEF-001 a DEF-003 (paso 10); plan y casos (etapa 2).
 
 ---
 
@@ -130,6 +131,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 7: concurrencia optimista en las confirmaciones (reintento único) y en cancelar contra pagar, retiro y aviso en una sola transacción, `no_cancelable` con un mensaje por caso (*fail fast*), tests parametrizados por regla y por ruta, prueba de mutación (16 de 16).
 - Paso 8: defectos activables por variables de entorno (Twelve-Factor), dinero en enteros en la base aunque la salida sea texto, reloj fijo para un orden repetible, tests parametrizados para el formato de pesos, prueba de mutación (13 de 13).
 - Paso 9: selectores estables (`data-testid`), mobile-first, mejora progresiva (el mapa es opcional), "Pagar" sin deshabilitar porque el pago es idempotente, un test parametrizado por página, prueba de mutación (7 de 7).
+- Paso 10: selectores estables en el panel, ráfaga de requests en paralelo contra uvicorn (194 de 200 en 500 sin el arreglo del DEF-003, 0 con el arreglo), prueba de mutación (7 de 7).
 
 ---
 
@@ -159,6 +161,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`.
 - [Paso 8](paso-08-defectos-sembrados.md): Los 18 tests de `test_defectos.py` se escribieron primero: 12 fallaron (rojo) y los 6 de control, con el defecto apagado, ya pasaban.
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): Los 6 tests de `test_paginas.py` se escribieron antes que las páginas y fallaron con 404, porque no existían las rutas ni `/estaticos`.
+- [Paso 10](paso-10-panel-readme-y-vista.md): El test del panel falló con 404 antes de crear la ruta, y `test_la_conexion_se_puede_usar_desde_otro_hilo` falló con `ProgrammingError` antes del arreglo del DEF-003.
 
 <a id="smoke-test"></a>
 
@@ -172,6 +175,7 @@ Prueba mínima y rápida que confirma que el sistema arranca y responde. Si fall
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): `GET /salud` responde `{"estado": "ok"}`: si eso falla, la app ni siquiera levantó.
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): `test_paginas.py` pide `/`, `/cliente/pedido/1` y `/delivery/pedido/1` y revisa 200, `text/html` y que estén sus `data-testid`. No prueba el comportamiento: eso queda para la prueba manual y para Playwright y Appium.
+- [Paso 10](paso-10-panel-readme-y-vista.md): `test_paginas.py` suma `/panel`: responde 200, `text/html` y trae `tabla-pedidos`, `linea-de-tiempo`, `bandeja-mensajes`, `estado-defectos`, `btn-cancelar-servicio` y `msg-error`.
 
 <a id="shift-left"></a>
 
@@ -210,6 +214,7 @@ Introducir defectos conocidos a propósito para medir si las pruebas los detecta
 - [Paso 1](paso-01-esqueleto-y-salud.md): `Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.
 - [Paso 8](paso-08-defectos-sembrados.md): Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `"$ 9.000"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4.
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): Los dos defectos del Paso 8 se ven en la pantalla: con el de contrato, `total-estimado` muestra `NaN`; con el de zona horaria, la `linea-de-tiempo` del cliente sale desordenada.
+- [Paso 10](paso-10-panel-readme-y-vista.md): El panel lee `/salud` y muestra cada defecto sembrado como PRENDIDO o apagado. Los informes DEF-001 y DEF-002 los documentan con sus pasos para reproducir.
 
 <a id="riesgos"></a>
 
@@ -240,6 +245,7 @@ Volver a ejecutar pruebas para confirmar que algo que funcionaba sigue funcionan
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): `test_siembra_no_duplica_al_reiniciar` arranca la app dos veces sobre la misma base y verifica que sigan siendo 4 platos.
 - [Paso 8](paso-08-defectos-sembrados.md): Con los defectos apagados, los 170 tests de los pasos 1 a 7 siguen en verde sin tocarlos: cada defecto queda aislado detrás de su interruptor.
+- [Paso 10](paso-10-panel-readme-y-vista.md): El DEF-003 se cerró con un test de regresión (la conexión usada desde otro hilo) y una prueba de confirmación contra uvicorn: 194 de 200 requests en 500 sin el arreglo, 0 con el arreglo. Los 194 tests anteriores siguieron en verde.
 
 <a id="transicion-estados"></a>
 
@@ -351,6 +357,18 @@ La fuente que dice cuál es el resultado correcto de una prueba: una especificac
 
 - [Paso 8](paso-08-defectos-sembrados.md): Cada test con el defecto prendido tiene su par con el defecto apagado. El orden de eventos de la tabla del spec y `test_flujo_completo_los_13_pasos` (Paso 7) dicen cuál es el resultado correcto.
 
+<a id="gestion-defectos"></a>
+
+#### Gestión de defectos
+
+📘 ISTQB · **Referencia:** CTFL v4.0 §5.5 Gestión de defectos
+
+Registrar cada defecto en un informe que permita reproducirlo, entender su impacto y seguirlo hasta cerrarlo: identificador, pasos, resultado esperado y obtenido, severidad, prioridad, evidencia y estado. El análisis de causa raíz busca *por qué* ocurrió, no solo *dónde*.
+
+**En este proyecto:**
+
+- [Paso 10](paso-10-panel-readme-y-vista.md): Tres informes: DEF-001 (zona horaria) y DEF-002 (contrato), sembrados y abiertos a propósito, y DEF-003 (SQLite entre hilos), real y cerrado. Cada uno con severidad, prioridad, pasos con la variable de entorno, evidencia, causa raíz y corrección.
+
 ### 📐 Normas
 
 <a id="capacidad-prueba"></a>
@@ -365,6 +383,7 @@ Característica de calidad: qué tan fácil es establecer criterios de prueba y 
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): `crear_app(cfg)` recibe la configuración por parámetro, así cada test arma su app con una base temporal propia.
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): Cada elemento interactivo lleva un `data-testid` fijo, y los errores muestran su código entre corchetes (`[firma_requerida]`): Playwright y Appium no dependen de textos ni de estilos.
+- [Paso 10](paso-10-panel-readme-y-vista.md): El panel dice qué defectos están prendidos (vía `/salud`) y cada zona tiene su `data-testid`: quien prueba sabe en qué modo está el sistema sin leer variables de entorno.
 
 <a id="openapi"></a>
 
@@ -526,6 +545,7 @@ Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.
 - [Paso 8](paso-08-defectos-sembrados.md): Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`.
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): La línea de tiempo del cliente muestra `ocurrido_en` tal como llega, sin reformatear: con el defecto de zona horaria se ve que falta la `Z`.
+- [Paso 10](paso-10-panel-readme-y-vista.md): El panel muestra `ocurrido_en` sin reformatear: con el defecto se ven marcas sin `Z` y PAGADO antes que COTIZADO. El DEF-001 propone guardar siempre en UTC con `Z`.
 
 <a id="e164"></a>
 
@@ -623,6 +643,18 @@ Las pautas de accesibilidad del W3C piden que un objetivo táctil mida al menos 
 **En este proyecto:**
 
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): Todos los botones miden al menos 48 px de alto y ocupan todo el ancho, en una pantalla de 360 px.
+
+<a id="iso29119-3"></a>
+
+#### ISO/IEC/IEEE 29119-3: documentación de pruebas
+
+📐 Norma · **Referencia:** ISO/IEC/IEEE 29119-3 — Informe de incidentes (Incident report)
+
+Parte 3 de la norma de pruebas de software: define los documentos de prueba (plan, especificación de casos, informes) y qué campos lleva cada uno. El informe de incidentes registra identificador, contexto, descripción, resultado esperado y obtenido, severidad, prioridad, estado y evidencia.
+
+**En este proyecto:**
+
+- [Paso 10](paso-10-panel-readme-y-vista.md): Los tres informes en `sistema-demo/docs/defectos/` usan los mismos campos del informe de incidentes, para que se puedan comparar y para que la etapa 2 los complete con el triage automático.
 
 ### ✅ Buenas prácticas
 
@@ -845,6 +877,7 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): 16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.
 - [Paso 8](paso-08-defectos-sembrados.md): 13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo.
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): 7 de 7: cambiar un `data-testid` (`btn-pedir`, `canvas-firma`, `btn-pagar`, `btn-entregado`, `linea-de-tiempo`), servir la página equivocada o montar los estáticos en otra ruta rompe al menos un test.
+- [Paso 10](paso-10-panel-readme-y-vista.md): 7 de 7 en el panel: sin la ruta, la ruta sirviendo `cliente.html` y cada uno de los 5 `data-testid` del plan renombrado rompieron el test.
 
 <a id="validacion-entrada"></a>
 
@@ -908,6 +941,7 @@ Un atributo dedicado a las pruebas, que no cambia cuando cambian el texto, el es
 **En este proyecto:**
 
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): Los `data-testid` son exactamente los del plan, porque los usan Playwright (etapa 4) y Appium (etapa 3). Los generados por JS llevan el id: `plato-{id}` y `cantidad-{plato_id}`.
+- [Paso 10](paso-10-panel-readme-y-vista.md): El panel suma `tabla-pedidos` (con `pedido-{id}`), `linea-de-tiempo`, `bandeja-mensajes` (con `mensaje-{id}`), `estado-defectos` (con `defecto-{clave}`) y `btn-cancelar-servicio` para Playwright.
 
 <a id="mobile-first"></a>
 
@@ -932,5 +966,17 @@ La función básica anda con lo mínimo, y lo extra se suma si está disponible.
 **En este proyecto:**
 
 - [Paso 9](paso-09-paginas-cliente-y-delivery.md): El mapa es opcional: sin internet, Leaflet no carga y la página avisa, pero el pedido se puede hacer igual. Sin `lat` y `lng`, la API acepta `null`.
+
+<a id="prueba-concurrencia"></a>
+
+#### Pruebas con requests en paralelo
+
+✅ Buena práctica · **Referencia:** Pruebas de concurrencia contra el servidor real
+
+Mandar varios requests a la vez a la app levantada de verdad, no a un cliente de prueba que los manda de a uno. Los defectos de hilos, conexiones y bloqueos suelen aparecer solo así.
+
+**En este proyecto:**
+
+- [Paso 10](paso-10-panel-readme-y-vista.md): Una ráfaga de 200 requests (20 en paralelo) contra uvicorn reprodujo el DEF-003: 194 respondieron 500. Con el arreglo, 0. `TestClient` no lo veía porque manda un request por vez.
 
 <!-- TERMINOS:FIN -->

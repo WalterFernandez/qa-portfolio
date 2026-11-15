@@ -24,10 +24,17 @@ PAGINAS = [
             "estado-pedido", "msg-error",
         ],
     ),
+    (
+        "/panel",
+        [
+            "tabla-pedidos", "linea-de-tiempo", "bandeja-mensajes",
+            "estado-defectos", "btn-cancelar-servicio", "msg-error",
+        ],
+    ),
 ]
 
 
-@pytest.mark.parametrize("ruta,testids", PAGINAS, ids=["inicio", "cliente", "delivery"])
+@pytest.mark.parametrize("ruta,testids", PAGINAS, ids=["inicio", "cliente", "delivery", "panel"])
 def test_pagina_se_sirve_con_sus_testids(cliente, ruta, testids):
     r = cliente.get(ruta)
     assert r.status_code == 200

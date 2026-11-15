@@ -53,6 +53,10 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
     def pagina_delivery(pedido_id: int) -> FileResponse:
         return FileResponse(PAGINAS / "delivery.html")
 
+    @app.get("/panel", include_in_schema=False)
+    def pagina_panel() -> FileResponse:
+        return FileResponse(PAGINAS / "panel.html")
+
     # Las excepciones de dominio se traducen a HTTP en un solo lugar.
     @app.exception_handler(PedidoNoEncontrado)
     def _404(request: Request, exc: PedidoNoEncontrado) -> JSONResponse:

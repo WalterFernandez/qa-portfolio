@@ -36,6 +36,7 @@ Cada fila de las tablas de normas lleva a la **ficha de su concepto** (qué es, 
 | [7](paso-07-entrega-cierre-y-cancelacion.md) | Entrega, doble confirmación, cierre y cancelación | `feat(demo): entrega, cierre y cancelación` |
 | [8](paso-08-defectos-sembrados.md) | Defectos sembrados: zona horaria y contrato | `feat(demo): defectos sembrados activables por variable de entorno` |
 | [9](paso-09-paginas-cliente-y-delivery.md) | Páginas mobile del cliente y del delivery | `feat(demo): páginas mobile del cliente y del delivery` |
+| [10](paso-10-panel-readme-y-vista.md) | Panel central, README, informes de defecto (DEF-001 a DEF-003) y vista de la etapa | `fix(demo): usar la conexión SQLite desde otro hilo del threadpool` · `feat(demo): panel central, README y vista de la etapa 1` |
 
 ## Mapa general (hacia dónde vamos)
 

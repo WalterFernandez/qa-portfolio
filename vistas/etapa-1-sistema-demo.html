@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etapa 1 · Sistema demo</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f0f2f5; --text: #1b1f24; --muted: #5f6b7a;
+    --border: #dde2e8; --accent: #2f6fde; --accent-soft: #e6eefc;
+    --ok: #1f8f50; --ok-soft: #e3f4ea; --warn: #b26b00; --warn-soft: #fcf0dc; --fail: #c83a3a; --fail-soft: #fbe5e5;
+    --cli: #2f6fde; --cli-soft: #e6eefc; --srv: #6b4fc8; --srv-soft: #eee9fb; --del: #1f8f50; --del-soft: #e3f4ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151a; --surface: #1a1f26; --surface-2: #222833; --text: #e7ebf0; --muted: #9aa5b3;
+      --border: #2e3641; --accent: #6f9ef5; --accent-soft: #1e2b44;
+      --ok: #5fcf8f; --ok-soft: #173326; --warn: #f0b45a; --warn-soft: #3a2c14; --fail: #f07a7a; --fail-soft: #3d1c1c;
+      --cli: #6f9ef5; --cli-soft: #1e2b44; --srv: #a993f0; --srv-soft: #2a2244; --del: #5fcf8f; --del-soft: #173326;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151a; --surface: #1a1f26; --surface-2: #222833; --text: #e7ebf0; --muted: #9aa5b3;
+    --border: #2e3641; --accent: #6f9ef5; --accent-soft: #1e2b44;
+    --ok: #5fcf8f; --ok-soft: #173326; --warn: #f0b45a; --warn-soft: #3a2c14; --fail: #f07a7a; --fail-soft: #3d1c1c;
+    --cli: #6f9ef5; --cli-soft: #1e2b44; --srv: #a993f0; --srv-soft: #2a2244; --del: #5fcf8f; --del-soft: #173326;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
+  header { padding: 28px 0 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
+  header p { margin: 6px 0 0; color: var(--muted); max-width: 680px; }
+  .links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .links a { color: var(--accent); text-decoration: none; font-size: 14px; border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; background: var(--surface); }
+  .theme-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 14px; }
+  .alineado { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--ok); background: var(--ok-soft); padding: 2px 10px; border-radius: 10px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 20px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .panel-head h2 { margin: 0; font-size: 19px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .shows { color: var(--muted); margin: 6px 0 0; font-size: 14px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 18px 0 0; }
+  .kpi { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+  .kpi b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .kpi span { color: var(--muted); font-size: 12px; }
+
+  /* Diagrama de estados: una cadena de chips coloreados por actor */
+  .cadena { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 4px; margin: 14px 0 6px; }
+  .st { font: 600 12px/1 ui-monospace, Consolas, monospace; padding: 7px 9px; border-radius: 6px; border: 1px solid; white-space: nowrap; }
+  .st small { display: block; font: 400 10px/1.2 system-ui, sans-serif; margin-top: 3px; opacity: .85; }
+  .st.cli { color: var(--cli); background: var(--cli-soft); border-color: var(--cli); }
+  .st.srv { color: var(--srv); background: var(--srv-soft); border-color: var(--srv); }
+  .st.del { color: var(--del); background: var(--del-soft); border-color: var(--del); }
+  .st.fin { color: var(--text); background: var(--surface-2); border-color: var(--border); }
+  .st.can { color: var(--fail); background: var(--fail-soft); border-color: var(--fail); }
+  .flecha { color: var(--muted); font-size: 14px; }
+  .rama { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 12px; margin-top: 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 16px; }
+  .col { border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-width: 0; }
+  .col h3 { margin: 0 0 8px; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+  .col h3 small { color: var(--muted); font-weight: 400; }
+  .col ul { margin: 0; padding-left: 18px; font-size: 14px; }
+  .col li { margin: 3px 0; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .tabla-scroll { overflow-x: auto; }
+
+  .bar { height: 8px; background: var(--surface-2); border-radius: 4px; margin-top: 3px; }
+  .bar > div { height: 100%; border-radius: 4px; background: var(--ok); }
+
+  .box { border-radius: 0 8px 8px 0; padding: 10px 14px; margin-top: 16px; border-left: 3px solid var(--accent); background: var(--accent-soft); }
+  .box h3 { margin: 0 0 4px; font-size: 14px; color: var(--accent); }
+  .box p { margin: 4px 0; font-size: 14px; }
+  .box ul { margin: 0; padding-left: 18px; font-size: 14px; }
+  .improve { border-left-color: var(--warn); background: var(--warn-soft); }
+  .improve h3 { color: var(--warn); }
+  .tag { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); white-space: nowrap; }
+  .def { display: grid; gap: 4px; }
+  .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; font-weight: 500; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pendiente { color: var(--warn); font-style: italic; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Etapa 1 · Sistema demo: delivery de comidas</h1>
+      <p>El sistema bajo prueba de todo el portfolio: API con máquina de estados, WhatsApp simulado, páginas mobile para el cliente y el delivery, un panel central y dos defectos sembrados que las etapas siguientes tienen que encontrar.</p>
+      <span class="alineado">Prácticas alineadas al syllabus ISTQB CTFL v4.0</span>
+    </div>
+    <div class="links">
+      <a href="../sistema-demo/README.md">README</a>
+      <a href="../pasos/pasos.html">Pasos</a>
+      <a href="../sistema-demo/docs/defectos/DEF-001-zona-horaria.md">Defectos</a>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Cambiar tema">◐</button>
+    </div>
+  </header>
+
+  <!-- ===== Resumen ===== -->
+  <section class="panel" aria-labelledby="t-resumen">
+    <div class="panel-head">
+      <h2 id="t-resumen">🍽️ Sistema demo <span class="meta">· Python + FastAPI + SQLite</span></h2>
+      <span class="meta">Datos cargados a mano · 2026-11-15 · 10 pasos</span>
+    </div>
+    <p class="shows"><b>Qué demuestra:</b> que puedo diseñar un sistema para probarlo: reglas de negocio explícitas, una sola fuente de verdad para los estados, puntos de observación (<code>data-testid</code>, bandeja de mensajes, <code>/salud</code>) y defectos conocidos para medir si las pruebas los detectan.</p>
+    <div class="kpis">
+      <div class="kpi"><b>196</b><span>tests automáticos en verde</span></div>
+      <div class="kpi"><b>18 / 18</b><span>transiciones válidas cubiertas</span></div>
+      <div class="kpi"><b>13</b><span>estados del pedido</span></div>
+      <div class="kpi"><b>14</b><span>rutas de API</span></div>
+      <div class="kpi"><b>4</b><span>páginas (cliente, delivery, panel, inicio)</span></div>
+      <div class="kpi"><b>2 + 1</b><span>defectos sembrados + 1 real corregido</span></div>
+    </div>
+  </section>
+
+  <!-- ===== Estados, actores y rutas ===== -->
+  <section class="panel" aria-labelledby="t-estados">
+    <div class="panel-head">
+      <h2 id="t-estados">🔁 Máquina de estados</h2>
+      <span class="meta">18 transiciones válidas · todo lo demás responde 409</span>
+    </div>
+    <div class="cadena" id="cadena" aria-label="Estados del pedido en orden"></div>
+    <div class="rama">
+      <span><span class="st can">CANCELADO</span></span>
+      <span>← desde <code>INICIADO</code>, <code>LINK_ENVIADO</code>, <code>DATOS_CARGADOS</code> o <code>COTIZADO</code> (cliente o servicio). Después de <code>PAGADO</code>: <b>409 no_cancelable</b>.</span>
+    </div>
+    <div class="rama">
+      <span><code>EN_PUERTA</code> → <code>RECIBIDO</code> y <code>ENTREGADO</code> en cualquier orden → <code>CERRADO</code> cuando están los dos.</span>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--cli)"></i>cliente</span>
+      <span><i style="background:var(--srv)"></i>servicio (automático)</span>
+      <span><i style="background:var(--del)"></i>delivery</span>
+      <span><i style="background:var(--muted)"></i>final</span>
+    </div>
+
+    <div class="cols">
+      <div class="col">
+        <h3>Actores <small>quién hace qué</small></h3>
+        <ul>
+          <li><b>Cliente</b> · web móvil: deja su teléfono, carga el pedido, firma en canvas, paga y confirma que recibió.</li>
+          <li><b>Servicio</b> · el sistema: cotiza en el servidor, manda los mensajes, asigna y cierra.</li>
+          <li><b>Delivery</b> · web móvil desde su link: retira, avisa que llegó y confirma la entrega.</li>
+          <li><b>Panel central</b> · todos los pedidos, su línea de tiempo, la bandeja y qué defectos están prendidos.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Rutas <small>14 en el OpenAPI</small></h3>
+        <div class="tabla-scroll">
+          <table>
+            <thead><tr><th>Método</th><th>Ruta</th></tr></thead>
+            <tbody id="rutas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Defectos ===== -->
+  <section class="panel" aria-labelledby="t-defectos">
+    <div class="panel-head">
+      <h2 id="t-defectos">🐞 Defectos</h2>
+      <span class="meta">Informes en formato ISO/IEC/IEEE 29119-3</span>
+    </div>
+    <div class="cols">
+      <div class="col def">
+        <h3>DEF-001 · Zona horaria <span class="pill warn">sembrado</span></h3>
+        <span><code>DEMO_DEFECTO_ZONA_HORARIA=1</code></span>
+        <span>Cada actor guarda su hora local sin offset y la línea de tiempo se ordena como texto: <b>PAGADO antes que COTIZADO</b>.</span>
+        <a href="../sistema-demo/docs/defectos/DEF-001-zona-horaria.md">Informe</a>
+      </div>
+      <div class="col def">
+        <h3>DEF-002 · Contrato <span class="pill warn">sembrado</span></h3>
+        <span><code>DEMO_DEFECTO_CONTRATO=1</code></span>
+        <span>Los montos salen como <code>"$ 9.000"</code> en vez de enteros: el total estimado del cliente muestra <b>NaN</b>.</span>
+        <a href="../sistema-demo/docs/defectos/DEF-002-contrato-precio.md">Informe</a>
+      </div>
+      <div class="col def">
+        <h3>DEF-003 · SQLite entre hilos <span class="pill ok">real · corregido</span></h3>
+        <span>Lo encontró el panel al pedir dos rutas en paralelo.</span>
+        <span>Ráfaga de 200 requests: <b>194 en 500</b> sin el arreglo, <b>0</b> con el arreglo.</span>
+        <a href="../sistema-demo/docs/defectos/DEF-003-sqlite-entre-hilos.md">Informe</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Recuadros ===== -->
+  <section class="panel" aria-labelledby="t-detalle">
+    <div class="panel-head">
+      <h2 id="t-detalle">📋 Detalle de la etapa</h2>
+    </div>
+
+    <div class="box">
+      <h3>En términos técnicos</h3>
+      <p><b>Máquina de estados:</b> una tabla de transiciones es la única fuente de verdad; cualquier salto o retroceso responde <code>409</code>. Las carreras de pago y cancelación se cierran con un <code>UPDATE</code> condicional.</p>
+      <p><b>Idempotencia:</b> pagar dos veces responde <code>200</code> con el mismo pedido y no cobra de nuevo; el doble clic en la página comparte la misma promesa.</p>
+      <p><b>Validación del lado servidor:</b> el total lo calcula el servidor con el catálogo; si el cliente manda un <code>total</code>, la API responde <code>422</code> (<code>extra="forbid"</code>).</p>
+      <p><b>Bug seeding:</b> dos defectos conocidos, apagados por defecto y activables por entorno (Twelve-Factor), con cada test de defecto acompañado de su par sin defecto como oráculo.</p>
+    </div>
+
+    <div class="box">
+      <h3>Cómo se mide</h3>
+      <p>Los números se cargan a mano en esta etapa; desde la etapa 2 los genera cada corrida de tests en CI.</p>
+      <div class="tabla-scroll">
+        <table>
+          <thead><tr><th>Archivo de tests</th><th class="n">Tests</th><th style="width:40%"></th></tr></thead>
+          <tbody id="tests"></tbody>
+        </table>
+      </div>
+      <p><b>Mutación manual:</b> en cada paso se rompió el código a propósito y se comprobó que algún test fallara (por ejemplo, 13 de 13 en los defectos sembrados y 7 de 7 en las páginas).</p>
+    </div>
+
+    <div class="box">
+      <h3>Norma / estándar</h3>
+      <div class="tabla-scroll">
+        <table>
+          <thead><tr><th>Práctica</th><th>ISTQB CTFL v4.0</th><th>ISO / otra</th></tr></thead>
+          <tbody>
+            <tr><td>Estados del pedido y cancelación</td><td>Transición de estados, tablas de decisión</td><td>—</td></tr>
+            <tr><td>Cantidades y dirección</td><td>Valores límite, particiones de equivalencia</td><td>—</td></tr>
+            <tr><td>Total del servidor, pago idempotente</td><td>Pruebas basadas en riesgos</td><td>25010: confiabilidad / seguridad</td></tr>
+            <tr><td>Montos como texto (DEF-002)</td><td>Pruebas de integración de componentes</td><td>25010: compatibilidad · OpenAPI 3.1</td></tr>
+            <tr><td>Hora local sin offset (DEF-001)</td><td>Transición de estados</td><td>ISO 8601 / RFC 3339</td></tr>
+            <tr><td>Informes DEF-001 a DEF-003</td><td>Gestión de defectos, análisis de causa raíz</td><td>29119-3: informe de incidentes</td></tr>
+            <tr><td>Test de regresión del DEF-003</td><td>Pruebas de confirmación y de regresión</td><td>25010: confiabilidad</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="box improve">
+      <h3>Mejoras</h3>
+      <ul>
+        <li class="pendiente">Notas de la prueba manual del Paso 9 (cliente y delivery en el celular): pendientes. Se suman acá cuando estén.</li>
+        <li>Prueba de concurrencia contra el servidor real (no solo con <code>TestClient</code>): el DEF-003 no lo veía ningún test de un request por vez. Va a la etapa 2 (API) y a la 5 (performance).</li>
+        <li>Generar los números de esta vista desde la corrida de pytest (un JSON de resultados) en vez de cargarlos a mano.</li>
+        <li>Capturas del <code>NaN</code> del DEF-002 y de la página del delivery para la evidencia de los informes.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>Sistema ficticio: teléfonos, direcciones, platos y nombres son inventados.</footer>
+</div>
+
+<script>
+// Los datos de la vista: a mano en la etapa 1 (ver "Cómo se mide").
+const ESTADOS = [
+  ["INICIADO", "cli", "2 · cliente"], ["LINK_ENVIADO", "srv", "3 · servicio"],
+  ["DATOS_CARGADOS", "cli", "4 · cliente"], ["COTIZADO", "srv", "5 · servicio"],
+  ["PAGADO", "cli", "6 · cliente"], ["ASIGNADO", "srv", "7 · servicio"],
+  ["RETIRADO", "del", "8 · delivery"], ["EN_CAMINO", "srv", "9 · servicio"],
+  ["EN_PUERTA", "del", "10 · delivery"], ["RECIBIDO", "cli", "11 · cliente"],
+  ["ENTREGADO", "del", "12 · delivery"], ["CERRADO", "fin", "13 · servicio"],
+];
+const RUTAS = [
+  ["GET", "/salud"], ["GET", "/platos"], ["POST", "/pedidos"], ["GET", "/pedidos"],
+  ["GET", "/pedidos/{id}"], ["PUT", "/pedidos/{id}"], ["POST", "/pedidos/{id}/firma"],
+  ["POST", "/pedidos/{id}/pago"], ["POST", "/pedidos/{id}/retirado"], ["POST", "/pedidos/{id}/en-puerta"],
+  ["POST", "/pedidos/{id}/recibido"], ["POST", "/pedidos/{id}/entregado"], ["POST", "/pedidos/{id}/cancelar"],
+  ["GET", "/mensajes"],
+];
+const TESTS = [
+  ["test_cotizacion.py", 42], ["test_pago.py", 32], ["test_estados.py", 29], ["test_defectos.py", 18],
+  ["test_crear_pedido.py", 14], ["test_cancelacion.py", 14], ["test_entrega.py", 14],
+  ["test_rutas_404.py", 9], ["test_concurrencia.py", 8], ["test_paginas.py", 7],
+  ["test_mensajes.py", 5], ["test_catalogo.py", 2], ["test_salud.py", 2],
+];
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+document.getElementById("cadena").innerHTML = ESTADOS.map(([e, a, paso], i) =>
+  (i ? '<span class="flecha" aria-hidden="true">→</span>' : "") +
+  `<span class="st ${a}">${esc(e)}<small>${esc(paso)}</small></span>`).join("");
+
+document.getElementById("rutas").innerHTML = RUTAS.map(([m, r]) =>
+  `<tr><td><code>${m}</code></td><td><code>${esc(r)}</code></td></tr>`).join("");
+
+const max = Math.max(...TESTS.map((t) => t[1]));
+const total = TESTS.reduce((s, t) => s + t[1], 0);
+document.getElementById("tests").innerHTML = TESTS.map(([f, n]) =>
+  `<tr><td><code>${esc(f)}</code></td><td class="n">${n}</td><td><div class="bar"><div style="width:${(n / max * 100).toFixed(1)}%"></div></div></td></tr>`
+).join("") + `<tr><td><b>Total</b></td><td class="n"><b>${total}</b></td><td></td></tr>`;
+
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+});
+</script>
+</body>
+</html>

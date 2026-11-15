@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel central · Delivery demo</title>
+  <link rel="stylesheet" href="/estaticos/estilos.css">
+</head>
+<body class="ancho">
+  <header>
+    <h1>Panel central</h1>
+    <p>Delivery demo · vista del servicio: todos los pedidos, su historial y la bandeja de WhatsApp simulado.</p>
+  </header>
+  <main>
+    <p class="mensaje-error" data-testid="msg-error" role="alert" hidden></p>
+
+    <!-- Qué defectos sembrados están prendidos (GET /salud). Ver Paso 8. -->
+    <section>
+      <h2>Defectos sembrados</h2>
+      <ul class="lista" data-testid="estado-defectos"></ul>
+    </section>
+
+    <div class="columnas">
+      <section>
+        <h2>Pedidos</h2>
+        <div class="tabla-scroll">
+          <table class="tabla" data-testid="tabla-pedidos">
+            <thead>
+              <tr><th scope="col">Pedido</th><th scope="col">Estado</th><th scope="col">Total</th><th scope="col">Teléfono</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="ayuda" id="sin-pedidos" hidden>Todavía no hay pedidos. Creá uno desde <a href="/">el inicio</a>.</p>
+      </section>
+
+      <section>
+        <h2>Pedido <span id="seleccionado">—</span></h2>
+        <p class="ayuda" id="ayuda-seleccion">Elegí un pedido de la tabla para ver su historial.</p>
+        <p hidden id="detalle-estado"><span class="estado" id="estado-seleccionado"></span></p>
+        <!-- Línea de tiempo tal como la ordena la API, con actor y hora sin reformatear.
+             Con DEMO_DEFECTO_ZONA_HORARIA=1 se ve PAGADO antes que COTIZADO. -->
+        <ol class="lista" data-testid="linea-de-tiempo"></ol>
+        <!-- El servicio puede cancelar antes del pago, igual que el cliente. Sin confirm(). -->
+        <button type="button" class="secundario" data-testid="btn-cancelar-servicio" hidden>Cancelar pedido (servicio)</button>
+      </section>
+    </div>
+
+    <!-- WhatsApp simulado (GET /mensajes): hace de celular del cliente y del delivery. -->
+    <section>
+      <h2>Bandeja de mensajes</h2>
+      <ol class="lista" data-testid="bandeja-mensajes"></ol>
+    </section>
+  </main>
+
+  <script src="/estaticos/api.js"></script>
+  <script>
+    const $ = (t) => document.querySelector('[data-testid="' + t + '"]');
+    const CANCELABLES = ["INICIADO", "LINK_ENVIADO", "DATOS_CARGADOS", "COTIZADO"];
+    const NOMBRES_DEFECTOS = {
+      zona_horaria: "Zona horaria (DEMO_DEFECTO_ZONA_HORARIA)",
+      contrato: "Contrato: montos como texto (DEMO_DEFECTO_CONTRATO)",
+    };
+    const MS = 3000;
+
+    // El pedido elegido vive en la URL (#7): sobrevive a un F5 y se puede compartir.
+    let elegido = parseInt(location.hash.slice(1), 10) || null;
+
+    function celda(texto) {
+      const td = document.createElement("td");
+      td.textContent = texto;
+      return td;
+    }
+
+    // ---------- Defectos ----------
+    async function cargarDefectos() {
+      const s = await api("GET", "/salud");
+      $("estado-defectos").replaceChildren(...Object.entries(s.defectos).map(([clave, prendido]) => {
+        const li = document.createElement("li");
+        li.dataset.testid = "defecto-" + clave;
+        const nombre = document.createElement("span");
+        nombre.textContent = NOMBRES_DEFECTOS[clave] || clave;
+        const valor = document.createElement("span");
+        valor.className = prendido ? "estado" : "precio";
+        valor.textContent = prendido ? "PRENDIDO" : "apagado";
+        li.append(nombre, valor);
+        return li;
+      }));
+    }
+
+    // ---------- Tabla de pedidos ----------
+    function renderTabla(pedidos) {
+      document.getElementById("sin-pedidos").hidden = pedidos.length > 0;
+      $("tabla-pedidos").tBodies[0].replaceChildren(...pedidos.map((p) => {
+        const tr = document.createElement("tr");
+        tr.dataset.testid = "pedido-" + p.id;
+        if (p.id === elegido) tr.className = "elegido";
+        const ver = document.createElement("button");
+        ver.type = "button";
+        ver.className = "enlace";
+        ver.textContent = "#" + p.id;
+        ver.setAttribute("aria-label", "Ver el pedido " + p.id);
+        ver.addEventListener("click", () => elegir(p.id));
+        const tdId = document.createElement("td");
+        tdId.append(ver);
+        // El total se muestra tal cual llega (pesos() no esconde un texto): con el
+        // defecto de contrato se ve "$ 22.500" en vez de un número.
+        tr.append(tdId, celda(p.estado), celda(p.total === null ? "—" : pesos(p.total)), celda(p.telefono));
+        return tr;
+      }));
+    }
+
+    // ---------- Pedido elegido ----------
+    function renderPedido(p) {
+      document.getElementById("seleccionado").textContent = "#" + p.id;
+      document.getElementById("ayuda-seleccion").hidden = true;
+      document.getElementById("detalle-estado").hidden = false;
+      document.getElementById("estado-seleccionado").textContent = p.estado;
+      $("btn-cancelar-servicio").hidden = !CANCELABLES.includes(p.estado);
+      $("linea-de-tiempo").replaceChildren(...p.eventos.map((e) => {
+        const li = document.createElement("li");
+        const a = document.createElement("span");
+        a.textContent = e.estado + " · " + e.actor;
+        const b = document.createElement("span");
+        b.className = "precio";
+        b.textContent = e.ocurrido_en; // sin reformatear: así se ve si falta la zona
+        li.append(a, b);
+        return li;
+      }));
+    }
+
+    async function cargarPedido() {
+      if (elegido === null) return;
+      try {
+        renderPedido(await api("GET", "/pedidos/" + elegido));
+      } catch (err) {
+        if (err.status !== 404) throw err;
+        elegido = null; // el #id de la URL no existe: se muestra el error y se olvida
+        mostrarError(err);
+      }
+    }
+
+    function elegir(id) {
+      elegido = id;
+      try { history.replaceState(null, "", "#" + id); } catch (e) {}
+      limpiarError();
+      refrescar();
+    }
+
+    // ---------- Bandeja ----------
+    function renderBandeja(mensajes) {
+      $("bandeja-mensajes").replaceChildren(...mensajes.map((m) => {
+        const li = document.createElement("li");
+        li.dataset.testid = "mensaje-" + m.id;
+        const texto = document.createElement("span");
+        texto.textContent = "#" + m.pedido_id + " → " + m.destino + " (" + m.telefono + "): ";
+        // El texto del mensaje ya trae el link: se reemplaza por un <a> en el mismo
+        // lugar para que no se vea dos veces. Si no lo trae, el <a> va al final.
+        const partes = m.link && m.texto.includes(m.link) ? m.texto.split(m.link) : [m.texto];
+        texto.append(partes[0]);
+        if (m.link) {
+          const a = document.createElement("a");
+          a.href = m.link;
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.textContent = m.link;
+          texto.append(partes.length > 1 ? "" : " ", a, partes.slice(1).join(m.link), " ");
+        }
+        const hora = document.createElement("span");
+        hora.className = "precio";
+        hora.textContent = m.creado_en;
+        li.append(texto, hora);
+        return li;
+      }));
+    }
+
+    // ---------- Acciones ----------
+    $("btn-cancelar-servicio").addEventListener("click", async () => {
+      limpiarError();
+      try {
+        renderPedido(await api("POST", "/pedidos/" + elegido + "/cancelar", { por: "servicio" }));
+        refrescar();
+      } catch (err) {
+        mostrarError(err);
+      }
+    });
+
+    // ---------- Consulta periódica ----------
+    async function refrescar() {
+      try {
+        const [pedidos, mensajes] = await Promise.all([api("GET", "/pedidos"), api("GET", "/mensajes")]);
+        renderTabla(pedidos);
+        renderBandeja(mensajes);
+        await cargarPedido();
+        await cargarDefectos();
+      } catch (err) {
+        mostrarError(err);
+      }
+    }
+
+    async function ciclo() {
+      await refrescar();
+      setTimeout(ciclo, MS);
+    }
+    ciclo();
+  </script>
+</body>
+</html>

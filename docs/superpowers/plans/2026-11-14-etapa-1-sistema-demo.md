@@ -373,9 +373,9 @@ def test_defecto_contrato_total_como_texto(crear_cliente): ...  # total == "$ 22
   - Informes de defecto (formato ISO/IEC/IEEE 29119-3): id, título, severidad y prioridad, pasos para reproducir (con la variable de entorno), resultado esperado y obtenido, evidencia (la captura del panel o del `NaN`), causa raíz y corrección propuesta.
   - `vistas/etapa-1-sistema-demo.html` (se abre con doble clic, sin servidor; mismo estilo que `mockups/portada-dashboard.html`): diagrama de estados, actores y rutas, con los recuadros **"En términos técnicos"** (máquina de estados, idempotencia, validación del lado servidor, bug seeding), **"Cómo se mide"** (cantidad de tests y de transiciones cubiertas: se cargan a mano en esta etapa, la automatización llega en la etapa 2), **"Norma / estándar"** (las filas del §6 del spec que aplican) y **"Mejoras"** (las notas de la prueba manual de Task 9).
 
-- [ ] **Step 1: Test que falla:** `GET /panel` → 200 y contiene `linea-de-tiempo` y `estado-defectos`.
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar el panel, el README, los 2 informes de defecto y la vista.
-- [ ] **Step 4:** Correr la suite completa → PASS. Abrir `/panel` con `DEMO_DEFECTO_ZONA_HORARIA=1`, completar un pedido hasta pago y ver PAGADO antes que COTIZADO en `linea-de-tiempo`.
-- [ ] **Step 5:** Revisión de confidencialidad: `git grep -n -i` con las palabras de la lista privada del usuario (rubro, nombre de la empresa, herramienta interna) sobre todo lo versionado → sin resultados.
-- [ ] **Step 6: Commit** `feat(demo): panel central, README y vista de la etapa 1`
+- [x] **Step 1: Test que falla:** `GET /panel` → 200 y contiene `linea-de-tiempo` y `estado-defectos`.
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar el panel, el README, los 2 informes de defecto y la vista.
+- [x] **Step 4:** Correr la suite completa → PASS. Abrir `/panel` con `DEMO_DEFECTO_ZONA_HORARIA=1`, completar un pedido hasta pago y ver PAGADO antes que COTIZADO en `linea-de-tiempo`.
+- [x] **Step 5:** Revisión de confidencialidad: `git grep -n -i` con las palabras de la lista privada del usuario (rubro, nombre de la empresa, herramienta interna) sobre todo lo versionado → sin resultados.
+- [x] **Step 6: Commit** `feat(demo): panel central, README y vista de la etapa 1`

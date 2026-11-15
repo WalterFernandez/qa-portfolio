@@ -9,7 +9,8 @@
     "6": ["transicion-estados", "tabla-decision", "particiones", "valores-limite", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "metodos-idempotentes", "data-url", "integridad", "idempotencia", "concurrencia-optimista", "validacion-entrada", "migracion-esquema", "unit-of-work", "fail-fast", "parametrizados", "mutacion"],
     "7": ["transicion-estados", "cobertura-transiciones", "tabla-decision", "particiones", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "adecuacion-funcional", "integridad", "concurrencia-optimista", "unit-of-work", "fail-fast", "parametrizados", "mutacion"],
     "8": ["defect-seeding", "oraculo", "tdd", "riesgos", "regresion", "iso8601", "interoperabilidad", "openapi", "twelve-factor", "dinero-enteros", "reloj-inyectable", "parametrizados", "mutacion"],
-    "9": ["smoke-test", "tdd", "defect-seeding", "capacidad-prueba", "interoperabilidad", "iso8601", "sri", "geolocalizacion", "wcag-objetivo-tactil", "data-testid", "mobile-first", "mejora-progresiva", "idempotencia", "parametrizados", "mutacion"]
+    "9": ["smoke-test", "tdd", "defect-seeding", "capacidad-prueba", "interoperabilidad", "iso8601", "sri", "geolocalizacion", "wcag-objetivo-tactil", "data-testid", "mobile-first", "mejora-progresiva", "idempotencia", "parametrizados", "mutacion"],
+    "10": ["smoke-test", "tdd", "gestion-defectos", "regresion", "defect-seeding", "iso29119-3", "iso8601", "capacidad-prueba", "data-testid", "prueba-concurrencia", "mutacion"]
   },
   "terminos": {
     "tdd": {
@@ -25,14 +26,15 @@
         "6": "Los 32 tests de firma y pago fallaron con 404 (no existían las rutas) antes de escribir `firmar` y `pagar`.",
         "7": "Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`.",
         "8": "Los 18 tests de `test_defectos.py` se escribieron primero: 12 fallaron (rojo) y los 6 de control, con el defecto apagado, ya pasaban.",
-        "9": "Los 6 tests de `test_paginas.py` se escribieron antes que las páginas y fallaron con 404, porque no existían las rutas ni `/estaticos`."
+        "9": "Los 6 tests de `test_paginas.py` se escribieron antes que las páginas y fallaron con 404, porque no existían las rutas ni `/estaticos`.",
+        "10": "El test del panel falló con 404 antes de crear la ruta, y `test_la_conexion_se_puede_usar_desde_otro_hilo` falló con `ProgrammingError` antes del arreglo del DEF-003."
       }
     },
     "smoke-test": {
       "tipo": "istqb", "titulo": "Smoke test (prueba de humo)",
       "ref": "Glosario ISTQB: smoke test",
       "que": "Prueba mínima y rápida que confirma que el sistema arranca y responde. Si falla, no tiene sentido correr el resto de las pruebas.",
-      "pasos": { "1": "`GET /salud` responde `{\"estado\": \"ok\"}`: si eso falla, la app ni siquiera levantó.", "9": "`test_paginas.py` pide `/`, `/cliente/pedido/1` y `/delivery/pedido/1` y revisa 200, `text/html` y que estén sus `data-testid`. No prueba el comportamiento: eso queda para la prueba manual y para Playwright y Appium." }
+      "pasos": { "1": "`GET /salud` responde `{\"estado\": \"ok\"}`: si eso falla, la app ni siquiera levantó.", "9": "`test_paginas.py` pide `/`, `/cliente/pedido/1` y `/delivery/pedido/1` y revisa 200, `text/html` y que estén sus `data-testid`. No prueba el comportamiento: eso queda para la prueba manual y para Playwright y Appium.", "10": "`test_paginas.py` suma `/panel`: responde 200, `text/html` y trae `tabla-pedidos`, `linea-de-tiempo`, `bandeja-mensajes`, `estado-defectos`, `btn-cancelar-servicio` y `msg-error`." }
     },
     "shift-left": {
       "tipo": "istqb", "titulo": "Shift-left: probar temprano",
@@ -50,13 +52,13 @@
       "tipo": "istqb", "titulo": "Defect seeding (siembra de defectos)",
       "ref": "Glosario ISTQB: fault seeding / defect seeding",
       "que": "Introducir defectos conocidos a propósito para medir si las pruebas los detectan. Sirve para evaluar la calidad de la propia suite.",
-      "pasos": { "1": "`Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.", "8": "Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `\"$ 9.000\"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4.", "9": "Los dos defectos del Paso 8 se ven en la pantalla: con el de contrato, `total-estimado` muestra `NaN`; con el de zona horaria, la `linea-de-tiempo` del cliente sale desordenada." }
+      "pasos": { "1": "`Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.", "8": "Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `\"$ 9.000\"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4.", "9": "Los dos defectos del Paso 8 se ven en la pantalla: con el de contrato, `total-estimado` muestra `NaN`; con el de zona horaria, la `linea-de-tiempo` del cliente sale desordenada.", "10": "El panel lee `/salud` y muestra cada defecto sembrado como PRENDIDO o apagado. Los informes DEF-001 y DEF-002 los documentan con sus pasos para reproducir." }
     },
     "capacidad-prueba": {
       "tipo": "norma", "titulo": "ISO/IEC 25010: capacidad de ser probado",
       "ref": "ISO/IEC 25010 — Mantenibilidad › Capacidad de ser probado",
       "que": "Característica de calidad: qué tan fácil es establecer criterios de prueba y ejecutarlos sobre el sistema.",
-      "pasos": { "1": "`crear_app(cfg)` recibe la configuración por parámetro, así cada test arma su app con una base temporal propia.", "9": "Cada elemento interactivo lleva un `data-testid` fijo, y los errores muestran su código entre corchetes (`[firma_requerida]`): Playwright y Appium no dependen de textos ni de estilos." }
+      "pasos": { "1": "`crear_app(cfg)` recibe la configuración por parámetro, así cada test arma su app con una base temporal propia.", "9": "Cada elemento interactivo lleva un `data-testid` fijo, y los errores muestran su código entre corchetes (`[firma_requerida]`): Playwright y Appium no dependen de textos ni de estilos.", "10": "El panel dice qué defectos están prendidos (vía `/salud`) y cada zona tiene su `data-testid`: quien prueba sabe en qué modo está el sistema sin leer variables de entorno." }
     },
     "openapi": {
       "tipo": "norma", "titulo": "OpenAPI Specification 3.1",
@@ -120,7 +122,7 @@
       "tipo": "istqb", "titulo": "Pruebas de regresión",
       "ref": "CTFL v4.0 §2.2.3 Pruebas de confirmación y de regresión",
       "que": "Volver a ejecutar pruebas para confirmar que algo que funcionaba sigue funcionando después de un cambio o, en este caso, después de un reinicio.",
-      "pasos": { "2": "`test_siembra_no_duplica_al_reiniciar` arranca la app dos veces sobre la misma base y verifica que sigan siendo 4 platos.", "8": "Con los defectos apagados, los 170 tests de los pasos 1 a 7 siguen en verde sin tocarlos: cada defecto queda aislado detrás de su interruptor." }
+      "pasos": { "2": "`test_siembra_no_duplica_al_reiniciar` arranca la app dos veces sobre la misma base y verifica que sigan siendo 4 platos.", "8": "Con los defectos apagados, los 170 tests de los pasos 1 a 7 siguen en verde sin tocarlos: cada defecto queda aislado detrás de su interruptor.", "10": "El DEF-003 se cerró con un test de regresión (la conexión usada desde otro hilo) y una prueba de confirmación contra uvicorn: 194 de 200 requests en 500 sin el arreglo, 0 con el arreglo. Los 194 tests anteriores siguieron en verde." }
     },
     "integridad": {
       "tipo": "norma", "titulo": "ISO/IEC 25010: integridad",
@@ -246,7 +248,7 @@
       "tipo": "bp", "titulo": "Prueba de mutación",
       "ref": "Mutation testing",
       "que": "Se cambia el código a propósito (una *mutación*) y se verifica que algún test falle. Si ninguno falla, la suite tiene un hueco.",
-      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.", "7": "16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.", "8": "13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo.", "9": "7 de 7: cambiar un `data-testid` (`btn-pedir`, `canvas-firma`, `btn-pagar`, `btn-entregado`, `linea-de-tiempo`), servir la página equivocada o montar los estáticos en otra ruta rompe al menos un test." }
+      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.", "7": "16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.", "8": "13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo.", "9": "7 de 7: cambiar un `data-testid` (`btn-pedir`, `canvas-firma`, `btn-pagar`, `btn-entregado`, `linea-de-tiempo`), servir la página equivocada o montar los estáticos en otra ruta rompe al menos un test.", "10": "7 de 7 en el panel: sin la ruta, la ruta sirviendo `cliente.html` y cada uno de los 5 `data-testid` del plan renombrado rompieron el test." }
     },
     "particiones": {
       "tipo": "istqb", "titulo": "Partición de equivalencia",
@@ -282,7 +284,7 @@
       "tipo": "norma", "titulo": "ISO 8601 / RFC 3339: fechas y horas",
       "ref": "ISO 8601; IETF RFC 3339",
       "que": "Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica UTC; con una sola zona, el texto se ordena igual que el tiempo.",
-      "pasos": { "4": "Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.", "8": "Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`.", "9": "La línea de tiempo del cliente muestra `ocurrido_en` tal como llega, sin reformatear: con el defecto de zona horaria se ve que falta la `Z`." }
+      "pasos": { "4": "Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.", "8": "Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`.", "9": "La línea de tiempo del cliente muestra `ocurrido_en` tal como llega, sin reformatear: con el defecto de zona horaria se ve que falta la `Z`.", "10": "El panel muestra `ocurrido_en` sin reformatear: con el defecto se ven marcas sin `Z` y PAGADO antes que COTIZADO. El DEF-001 propone guardar siempre en UTC con `Z`." }
     },
     "e164": {
       "tipo": "norma", "titulo": "ITU-T E.164: números de teléfono",
@@ -372,7 +374,7 @@
       "tipo": "bp", "titulo": "Selectores estables (data-testid)",
       "ref": "Testing Library y Playwright: localizadores por test id",
       "que": "Un atributo dedicado a las pruebas, que no cambia cuando cambian el texto, el estilo o el orden. Las pruebas de UI no se rompen por un rediseño.",
-      "pasos": { "9": "Los `data-testid` son exactamente los del plan, porque los usan Playwright (etapa 4) y Appium (etapa 3). Los generados por JS llevan el id: `plato-{id}` y `cantidad-{plato_id}`." }
+      "pasos": { "9": "Los `data-testid` son exactamente los del plan, porque los usan Playwright (etapa 4) y Appium (etapa 3). Los generados por JS llevan el id: `plato-{id}` y `cantidad-{plato_id}`.", "10": "El panel suma `tabla-pedidos` (con `pedido-{id}`), `linea-de-tiempo`, `bandeja-mensajes` (con `mensaje-{id}`), `estado-defectos` (con `defecto-{clave}`) y `btn-cancelar-servicio` para Playwright." }
     },
     "mobile-first": {
       "tipo": "bp", "titulo": "Diseño mobile-first",
@@ -385,6 +387,24 @@
       "ref": "Progressive enhancement (MDN)",
       "que": "La función básica anda con lo mínimo, y lo extra se suma si está disponible. Si falla lo extra, la página sigue sirviendo.",
       "pasos": { "9": "El mapa es opcional: sin internet, Leaflet no carga y la página avisa, pero el pedido se puede hacer igual. Sin `lat` y `lng`, la API acepta `null`." }
+    },
+    "gestion-defectos": {
+      "tipo": "istqb", "titulo": "Gestión de defectos",
+      "ref": "CTFL v4.0 §5.5 Gestión de defectos",
+      "que": "Registrar cada defecto en un informe que permita reproducirlo, entender su impacto y seguirlo hasta cerrarlo: identificador, pasos, resultado esperado y obtenido, severidad, prioridad, evidencia y estado. El análisis de causa raíz busca *por qué* ocurrió, no solo *dónde*.",
+      "pasos": { "10": "Tres informes: DEF-001 (zona horaria) y DEF-002 (contrato), sembrados y abiertos a propósito, y DEF-003 (SQLite entre hilos), real y cerrado. Cada uno con severidad, prioridad, pasos con la variable de entorno, evidencia, causa raíz y corrección." }
+    },
+    "iso29119-3": {
+      "tipo": "norma", "titulo": "ISO/IEC/IEEE 29119-3: documentación de pruebas",
+      "ref": "ISO/IEC/IEEE 29119-3 — Informe de incidentes (Incident report)",
+      "que": "Parte 3 de la norma de pruebas de software: define los documentos de prueba (plan, especificación de casos, informes) y qué campos lleva cada uno. El informe de incidentes registra identificador, contexto, descripción, resultado esperado y obtenido, severidad, prioridad, estado y evidencia.",
+      "pasos": { "10": "Los tres informes en `sistema-demo/docs/defectos/` usan los mismos campos del informe de incidentes, para que se puedan comparar y para que la etapa 2 los complete con el triage automático." }
+    },
+    "prueba-concurrencia": {
+      "tipo": "bp", "titulo": "Pruebas con requests en paralelo",
+      "ref": "Pruebas de concurrencia contra el servidor real",
+      "que": "Mandar varios requests a la vez a la app levantada de verdad, no a un cliente de prueba que los manda de a uno. Los defectos de hilos, conexiones y bloqueos suelen aparecer solo así.",
+      "pasos": { "10": "Una ráfaga de 200 requests (20 en paralelo) contra uvicorn reprodujo el DEF-003: 194 respondieron 500. Con el arreglo, 0. `TestClient` no lo veía porque manda un request por vez." }
     }
   }
 }

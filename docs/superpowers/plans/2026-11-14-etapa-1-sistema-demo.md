@@ -311,7 +311,7 @@ def test_firmar_antes_de_cotizar_da_409(cliente, pedido_nuevo): ...
   - `formato.pesos(n: int) -> str` → `"$ 9.000"` (separador de miles con punto).
   - Con `cfg.defecto_contrato=True`: `precio` en `/platos` y `precio_unitario`, `subtotal` y `total` en el pedido se serializan con `formato.pesos` (texto). La base sigue guardando enteros: el defecto está solo en el contrato de salida.
 
-- [ ] **Step 1: Tests que fallan**
+- [x] **Step 1: Tests que fallan**
 
 ```python
 def test_defecto_zona_horaria_desordena_la_linea_de_tiempo(crear_cliente, monkeypatch):
@@ -332,10 +332,10 @@ def test_defecto_contrato_total_como_texto(crear_cliente): ...  # total == "$ 22
 ```
 
   (Con el defecto, los eventos del servicio quedan con hora de Nueva York (UTC-5, ~`10:00`) y los del cliente con hora de México (UTC-6, ~`09:00`). Al ordenar por texto, PAGADO (cliente) queda antes que COTIZADO (servicio), aunque ocurrió después.)
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar.
-- [ ] **Step 4:** Correr la suite completa: los tests de Tasks 1–7 siguen en verde porque los defectos están apagados por defecto.
-- [ ] **Step 5: Commit** `feat(demo): defectos sembrados activables por variable de entorno`
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar.
+- [x] **Step 4:** Correr la suite completa: los tests de Tasks 1–7 siguen en verde porque los defectos están apagados por defecto.
+- [x] **Step 5: Commit** `feat(demo): defectos sembrados activables por variable de entorno`
 
 ### Task 9: Páginas del cliente y del delivery
 

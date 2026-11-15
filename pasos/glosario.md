@@ -41,16 +41,16 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 a 7, el test se escribe antes que el código.
+- TDD y *shift-left*: pasos 1 a 8, el test se escribe antes que el código.
 - *Smoke test*: `GET /salud` (paso 1).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
-- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5); un doble clic en “Pagar” no cobra dos veces (paso 6); el delivery no cierra sin la confirmación del cliente y no se cancela con el pago hecho, ni siquiera a la vez (paso 7).
+- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5); un doble clic en “Pagar” no cobra dos veces (paso 6); el delivery no cierra sin la confirmación del cliente y no se cancela con el pago hecho, ni siquiera a la vez (paso 7); los defectos sembrados se eligieron por probabilidad e impacto: varias zonas horarias y clientes que esperan números (paso 8).
 - Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5); el pago recorre `COTIZADO → PAGADO → ASIGNADO` y firmar o pagar fuera de `COTIZADO` da 409 (paso 6); el recorrido `ASIGNADO → … → CERRADO` y las 6 transiciones del cierre en los dos órdenes (paso 7).
 - Prueba de componente (nivel unitario, sin HTTP ni base): paso 3.
 - Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): pasos 4 a 6; los 13 pasos de punta a punta (paso 7).
 - Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5); formato y largo de la firma (paso 6); quién cancela y un estado por tramo pagado (paso 7).
 - Tabla de decisión: estado × firma para el pago (paso 6); estado de partida × quién cancela (paso 7).
-- Próximamente: defectos sembrados (paso 8).
+- Defectos sembrados (*defect seeding*): zona horaria y contrato, apagados por defecto y activables por entorno; cada test con el defecto prendido tiene su par apagado como oráculo, y los 170 tests anteriores sirven de regresión (paso 8).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
 
@@ -81,14 +81,14 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 
 ### Dónde lo aplicamos en este proyecto
 
-- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 a 7), completitud: los 13 pasos del negocio (paso 7).
+- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 a 7), completitud: los 13 pasos del negocio (paso 7), interoperabilidad: el defecto de contrato manda texto donde se espera un número (paso 8).
 - UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
 - RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5); 409 `firma_requerida` y `POST /pago` idempotente aunque la norma no lo exija (paso 6); 404 en las 9 rutas de un pedido, 409 `no_cancelable` y 422 con `por` inválido (paso 7).
-- ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4).
+- ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4); el defecto de zona horaria las guarda en hora local sin offset y la línea de tiempo se desordena (paso 8).
 - ITU-T E.164: máximo de 15 dígitos en el teléfono (paso 4).
 - ISO 6709: latitud en [-90, 90] y longitud en [-180, 180] (paso 5).
 - RFC 2397 y RFC 4648: la firma como *data URL* PNG en base64 (paso 6).
-- OpenAPI 3.1: documentación automática en `/docs` (paso 1). En la etapa 2, contrato JSON Schema.
+- OpenAPI 3.1: documentación automática en `/docs` (paso 1); `precio` y `total` son enteros en el contrato y el defecto de contrato lo rompe (paso 8). En la etapa 2, contrato JSON Schema.
 - ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).
 
 ---
@@ -127,6 +127,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 5: el total lo calcula el servidor con el catálogo (fuente única), lista blanca contra `total`, dinero en enteros, validar todo antes de escribir (*fail fast*) en una sola transacción, prueba de mutación (6 de 6, con un caso sumado por una sobreviviente).
 - Paso 6: pago idempotente, firma por lista blanca, migración de esquema aditiva, pago y asignación en una sola transacción, primero el estado y después la firma (*fail fast*), control de concurrencia optimista contra la carrera del pago, prueba de mutación (12 de 12 y 7 de 7).
 - Paso 7: concurrencia optimista en las confirmaciones (reintento único) y en cancelar contra pagar, retiro y aviso en una sola transacción, `no_cancelable` con un mensaje por caso (*fail fast*), tests parametrizados por regla y por ruta, prueba de mutación (16 de 16).
+- Paso 8: defectos activables por variables de entorno (Twelve-Factor), dinero en enteros en la base aunque la salida sea texto, reloj fijo para un orden repetible, tests parametrizados para el formato de pesos, prueba de mutación (13 de 13).
 
 ---
 
@@ -154,6 +155,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 41 tests de cotización escritos antes que `cargar_datos`: fallaron con 405 porque la ruta `PUT` no existía.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 32 tests de firma y pago fallaron con 404 (no existían las rutas) antes de escribir `firmar` y `pagar`.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`.
+- [Paso 8](paso-08-defectos-sembrados.md): Los 18 tests de `test_defectos.py` se escribieron primero: 12 fallaron (rojo) y los 6 de control, con el defecto apagado, ya pasaban.
 
 <a id="smoke-test"></a>
 
@@ -202,6 +204,7 @@ Introducir defectos conocidos a propósito para medir si las pruebas los detecta
 **En este proyecto:**
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): `Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.
+- [Paso 8](paso-08-defectos-sembrados.md): Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `"$ 9.000"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4.
 
 <a id="riesgos"></a>
 
@@ -218,6 +221,7 @@ Priorizar qué probar según la probabilidad y el impacto de que algo salga mal.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente, también con dos pagos simultáneos. Riesgo conocido y aceptado: sin autenticación, quien conozca el id puede firmar o pagar (IDOR); queda para las pruebas de seguridad de una etapa posterior.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Riesgo: que el delivery cierre un pedido que el cliente no recibió. Mitigación: el cierre exige las dos confirmaciones. Riesgo: cancelar con el pago hecho, también si cancelar y pagar llegan a la vez. Mitigación: `no_cancelable`, probado en los dos órdenes.
+- [Paso 8](paso-08-defectos-sembrados.md): Los defectos se eligieron por probabilidad e impacto: usuarios en tres zonas horarias (el orden de los eventos engaña: `PAGADO` antes que `COTIZADO`) y clientes que esperan un número (el total no se puede sumar).
 
 <a id="regresion"></a>
 
@@ -230,6 +234,7 @@ Volver a ejecutar pruebas para confirmar que algo que funcionaba sigue funcionan
 **En este proyecto:**
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): `test_siembra_no_duplica_al_reiniciar` arranca la app dos veces sobre la misma base y verifica que sigan siendo 4 platos.
+- [Paso 8](paso-08-defectos-sembrados.md): Con los defectos apagados, los 170 tests de los pasos 1 a 7 siguen en verde sin tocarlos: cada defecto queda aislado detrás de su interruptor.
 
 <a id="transicion-estados"></a>
 
@@ -329,6 +334,18 @@ Se listan las condiciones (por ejemplo, estado y firma) y para cada combinación
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): El pago: estado (antes de cotizar, `COTIZADO`, pagado o posterior, `CANCELADO`) × firma (sí o no) → 409 `transicion_invalida`, 409 `firma_requerida`, 200 con asignación o 200 sin cambios.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): La cancelación: estado de partida (antes del pago, pagado, final) × quién cancela (cliente o servicio) → 200 `CANCELADO` o 409 `no_cancelable` con un mensaje para cada caso. Cinco reglas, R1 a R5, con su nombre.
 
+<a id="oraculo"></a>
+
+#### Oráculo de prueba
+
+📘 ISTQB · **Referencia:** Glosario ISTQB: test oracle
+
+La fuente que dice cuál es el resultado correcto de una prueba: una especificación, una norma, otro sistema o una versión anterior. Sin oráculo, un test no puede decidir si pasó.
+
+**En este proyecto:**
+
+- [Paso 8](paso-08-defectos-sembrados.md): Cada test con el defecto prendido tiene su par con el defecto apagado. El orden de eventos de la tabla del spec y `test_flujo_completo_los_13_pasos` (Paso 7) dicen cuál es el resultado correcto.
+
 ### 📐 Normas
 
 <a id="capacidad-prueba"></a>
@@ -354,6 +371,7 @@ Formato estándar para describir una API REST (rutas, parámetros, respuestas) q
 **En este proyecto:**
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): FastAPI genera la especificación sola y la muestra en `/docs`. En la etapa 2 se usa como contrato.
+- [Paso 8](paso-08-defectos-sembrados.md): El contrato dice que `precio`, `precio_unitario`, `subtotal` y `total` son enteros; el defecto de contrato manda texto. En la etapa 2, la validación con JSON Schema lo tiene que detectar.
 
 <a id="json"></a>
 
@@ -500,6 +518,7 @@ Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.
+- [Paso 8](paso-08-defectos-sembrados.md): Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`.
 
 <a id="e164"></a>
 
@@ -549,6 +568,18 @@ Una *data URL* lleva el contenido de un archivo dentro del texto: `data:<tipo>;b
 
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): La firma llega como `data:image/png;base64,...`, que es lo que entrega un `<canvas>` del navegador (Paso 9). El patrón solo acepta el alfabeto base64.
 
+<a id="interoperabilidad"></a>
+
+#### ISO/IEC 25010: interoperabilidad
+
+📐 Norma · **Referencia:** ISO/IEC 25010 — Compatibilidad › Interoperabilidad
+
+Capacidad de un sistema de intercambiar información con otros y de que esos otros la puedan usar. Cambiar el tipo de un campo la rompe, aunque el dato "sea el mismo".
+
+**En este proyecto:**
+
+- [Paso 8](paso-08-defectos-sembrados.md): Con el defecto de contrato, `total` llega como `"$ 22.500"`: un cliente que lo suma o lo compara recibe texto. La página del cliente (Paso 9) muestra `NaN`.
+
 ### ✅ Buenas prácticas
 
 <a id="twelve-factor"></a>
@@ -562,6 +593,7 @@ La configuración que cambia entre entornos (rutas, interruptores) va en variabl
 **En este proyecto:**
 
 - [Paso 1](paso-01-esqueleto-y-salud.md): `Config` lee la ruta de la base y los defectos desde variables de entorno.
+- [Paso 8](paso-08-defectos-sembrados.md): Los defectos se prenden con `DEMO_DEFECTO_ZONA_HORARIA=1` y `DEMO_DEFECTO_CONTRATO=1`, sin cambiar el código.
 
 <a id="application-factory"></a>
 
@@ -701,6 +733,7 @@ Los `float` tienen errores de redondeo (`0.1 + 0.2 = 0.30000000000000004`). Con 
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Los precios son `int` en pesos y un test verifica el tipo.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): El total es la suma de `cantidad × precio_unitario` en pesos enteros: `2 × 9000 + 4500 = 22500`.
+- [Paso 8](paso-08-defectos-sembrados.md): Con el defecto de contrato, la base sigue guardando enteros y el total se calcula igual; solo la salida pasa a texto. Un test lee la misma base con y sin el defecto.
 
 <a id="table-driven"></a>
 
@@ -731,6 +764,7 @@ Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un c
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Reglas R1 a R5 de la cancelación, las 9 rutas del 404 y los 5 bodies inválidos de `por`, cada uno con su id.
+- [Paso 8](paso-08-defectos-sembrados.md): `formato.pesos` con seis montos con nombre: 0, 999, 1000 (primer separador), 9000, 22500 y 1234567 (dos separadores).
 
 <a id="fail-fast"></a>
 
@@ -763,6 +797,7 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): 12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.
 - [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): 16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.
+- [Paso 8](paso-08-defectos-sembrados.md): 13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo.
 
 <a id="validacion-entrada"></a>
 
@@ -801,6 +836,7 @@ La hora actual sale de una sola función que los tests pueden reemplazar, así l
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `reloj.ahora_utc()` es la única fuente de "ahora"; en el Paso 8 los tests la fijan con `monkeypatch` para provocar el defecto de zona horaria.
+- [Paso 8](paso-08-defectos-sembrados.md): El fixture `reloj_fijo` reemplaza `reloj.ahora_utc` con instantes de 5 en 5 segundos desde las 15:00 UTC: el desorden de la zona horaria sale siempre igual, a cualquier hora.
 
 <a id="migracion-esquema"></a>
 

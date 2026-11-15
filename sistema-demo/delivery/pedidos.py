@@ -299,8 +299,8 @@ def _items(ctx: Ctx, pedido_id: int) -> list[dict]:
             "plato_id": f["plato_id"],
             "nombre": f["nombre"],
             "cantidad": f["cantidad"],
-            "precio_unitario": f["precio_unitario"],
-            "subtotal": f["cantidad"] * f["precio_unitario"],
+            "precio_unitario": catalogo.monto(ctx, f["precio_unitario"]),
+            "subtotal": catalogo.monto(ctx, f["cantidad"] * f["precio_unitario"]),
         }
         for f in filas
     ]
@@ -325,7 +325,7 @@ def _a_json(ctx: Ctx, fila) -> dict:
         "direccion": fila["direccion"],
         "lat": fila["lat"],
         "lng": fila["lng"],
-        "total": fila["total"],
+        "total": catalogo.monto(ctx, fila["total"]),
         "demora_min": fila["demora_min"],
         "firmado": bool(fila["firmado"]),
         "recibido_cliente": bool(fila["recibido_cliente"]),

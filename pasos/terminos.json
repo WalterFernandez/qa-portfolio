@@ -7,7 +7,8 @@
     "4": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "http-404", "http-409", "http-422", "recuperabilidad", "iso8601", "e164", "validacion-entrada", "table-driven", "fail-fast", "doble-prueba", "reloj-inyectable", "parametrizados", "mutacion"],
     "5": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "riesgos", "http-409", "http-422", "integridad", "iso6709", "validacion-entrada", "dinero-enteros", "unit-of-work", "fail-fast", "table-driven", "parametrizados", "mutacion"],
     "6": ["transicion-estados", "tabla-decision", "particiones", "valores-limite", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "metodos-idempotentes", "data-url", "integridad", "idempotencia", "concurrencia-optimista", "validacion-entrada", "migracion-esquema", "unit-of-work", "fail-fast", "parametrizados", "mutacion"],
-    "7": ["transicion-estados", "cobertura-transiciones", "tabla-decision", "particiones", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "adecuacion-funcional", "integridad", "concurrencia-optimista", "unit-of-work", "fail-fast", "parametrizados", "mutacion"]
+    "7": ["transicion-estados", "cobertura-transiciones", "tabla-decision", "particiones", "tdd", "integracion-componentes", "riesgos", "http-404", "http-409", "http-422", "adecuacion-funcional", "integridad", "concurrencia-optimista", "unit-of-work", "fail-fast", "parametrizados", "mutacion"],
+    "8": ["defect-seeding", "oraculo", "tdd", "riesgos", "regresion", "iso8601", "interoperabilidad", "openapi", "twelve-factor", "dinero-enteros", "reloj-inyectable", "parametrizados", "mutacion"]
   },
   "terminos": {
     "tdd": {
@@ -21,7 +22,8 @@
         "4": "Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código.",
         "5": "41 tests de cotización escritos antes que `cargar_datos`: fallaron con 405 porque la ruta `PUT` no existía.",
         "6": "Los 32 tests de firma y pago fallaron con 404 (no existían las rutas) antes de escribir `firmar` y `pagar`.",
-        "7": "Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`."
+        "7": "Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`.",
+        "8": "Los 18 tests de `test_defectos.py` se escribieron primero: 12 fallaron (rojo) y los 6 de control, con el defecto apagado, ya pasaban."
       }
     },
     "smoke-test": {
@@ -46,7 +48,7 @@
       "tipo": "istqb", "titulo": "Defect seeding (siembra de defectos)",
       "ref": "Glosario ISTQB: fault seeding / defect seeding",
       "que": "Introducir defectos conocidos a propósito para medir si las pruebas los detectan. Sirve para evaluar la calidad de la propia suite.",
-      "pasos": { "1": "`Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8." }
+      "pasos": { "1": "`Config` trae los interruptores `defecto_zona_horaria` y `defecto_contrato`, y `/salud` informa si están encendidos. Se usan en el Paso 8.", "8": "Se encienden los dos: `DEMO_DEFECTO_ZONA_HORARIA` (cada actor guarda su hora local sin offset y la línea de tiempo se desordena) y `DEMO_DEFECTO_CONTRATO` (los montos salen como texto `\"$ 9.000\"`). Apagados por defecto; son el blanco de las pruebas de las etapas 2 a 4." }
     },
     "capacidad-prueba": {
       "tipo": "norma", "titulo": "ISO/IEC 25010: capacidad de ser probado",
@@ -58,7 +60,7 @@
       "tipo": "norma", "titulo": "OpenAPI Specification 3.1",
       "ref": "OpenAPI Initiative — OAS 3.1",
       "que": "Formato estándar para describir una API REST (rutas, parámetros, respuestas) que entienden humanos y herramientas.",
-      "pasos": { "1": "FastAPI genera la especificación sola y la muestra en `/docs`. En la etapa 2 se usa como contrato." }
+      "pasos": { "1": "FastAPI genera la especificación sola y la muestra en `/docs`. En la etapa 2 se usa como contrato.", "8": "El contrato dice que `precio`, `precio_unitario`, `subtotal` y `total` son enteros; el defecto de contrato manda texto. En la etapa 2, la validación con JSON Schema lo tiene que detectar." }
     },
     "json": {
       "tipo": "norma", "titulo": "RFC 8259: formato JSON",
@@ -70,7 +72,7 @@
       "tipo": "bp", "titulo": "Twelve-Factor App, factor III: configuración",
       "ref": "The Twelve-Factor App — III. Config",
       "que": "La configuración que cambia entre entornos (rutas, interruptores) va en variables de entorno, no escrita en el código.",
-      "pasos": { "1": "`Config` lee la ruta de la base y los defectos desde variables de entorno." }
+      "pasos": { "1": "`Config` lee la ruta de la base y los defectos desde variables de entorno.", "8": "Los defectos se prenden con `DEMO_DEFECTO_ZONA_HORARIA=1` y `DEMO_DEFECTO_CONTRATO=1`, sin cambiar el código." }
     },
     "application-factory": {
       "tipo": "bp", "titulo": "Patrón Application Factory",
@@ -108,14 +110,15 @@
         "3": "Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago.",
         "5": "Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo.",
         "6": "Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente, también con dos pagos simultáneos. Riesgo conocido y aceptado: sin autenticación, quien conozca el id puede firmar o pagar (IDOR); queda para las pruebas de seguridad de una etapa posterior.",
-        "7": "Riesgo: que el delivery cierre un pedido que el cliente no recibió. Mitigación: el cierre exige las dos confirmaciones. Riesgo: cancelar con el pago hecho, también si cancelar y pagar llegan a la vez. Mitigación: `no_cancelable`, probado en los dos órdenes."
+        "7": "Riesgo: que el delivery cierre un pedido que el cliente no recibió. Mitigación: el cierre exige las dos confirmaciones. Riesgo: cancelar con el pago hecho, también si cancelar y pagar llegan a la vez. Mitigación: `no_cancelable`, probado en los dos órdenes.",
+        "8": "Los defectos se eligieron por probabilidad e impacto: usuarios en tres zonas horarias (el orden de los eventos engaña: `PAGADO` antes que `COTIZADO`) y clientes que esperan un número (el total no se puede sumar)."
       }
     },
     "regresion": {
       "tipo": "istqb", "titulo": "Pruebas de regresión",
       "ref": "CTFL v4.0 §2.2.3 Pruebas de confirmación y de regresión",
       "que": "Volver a ejecutar pruebas para confirmar que algo que funcionaba sigue funcionando después de un cambio o, en este caso, después de un reinicio.",
-      "pasos": { "2": "`test_siembra_no_duplica_al_reiniciar` arranca la app dos veces sobre la misma base y verifica que sigan siendo 4 platos." }
+      "pasos": { "2": "`test_siembra_no_duplica_al_reiniciar` arranca la app dos veces sobre la misma base y verifica que sigan siendo 4 platos.", "8": "Con los defectos apagados, los 170 tests de los pasos 1 a 7 siguen en verde sin tocarlos: cada defecto queda aislado detrás de su interruptor." }
     },
     "integridad": {
       "tipo": "norma", "titulo": "ISO/IEC 25010: integridad",
@@ -181,7 +184,7 @@
       "tipo": "bp", "titulo": "Dinero en unidades enteras",
       "ref": "Evitar coma flotante binaria (IEEE 754) con dinero",
       "que": "Los `float` tienen errores de redondeo (`0.1 + 0.2 = 0.30000000000000004`). Con dinero se usan enteros.",
-      "pasos": { "2": "Los precios son `int` en pesos y un test verifica el tipo.", "5": "El total es la suma de `cantidad × precio_unitario` en pesos enteros: `2 × 9000 + 4500 = 22500`." }
+      "pasos": { "2": "Los precios son `int` en pesos y un test verifica el tipo.", "5": "El total es la suma de `cantidad × precio_unitario` en pesos enteros: `2 × 9000 + 4500 = 22500`.", "8": "Con el defecto de contrato, la base sigue guardando enteros y el total se calcula igual; solo la salida pasa a texto. Un test lee la misma base con y sin el defecto." }
     },
     "transicion-estados": {
       "tipo": "istqb", "titulo": "Prueba de transición de estados",
@@ -229,7 +232,7 @@
       "tipo": "bp", "titulo": "Tests parametrizados",
       "ref": "pytest.mark.parametrize",
       "que": "Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un caso separado en el reporte.",
-      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).", "4": "Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…", "5": "Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).", "6": "Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.", "7": "Reglas R1 a R5 de la cancelación, las 9 rutas del 404 y los 5 bodies inválidos de `por`, cada uno con su id." }
+      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).", "4": "Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…", "5": "Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).", "6": "Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.", "7": "Reglas R1 a R5 de la cancelación, las 9 rutas del 404 y los 5 bodies inválidos de `por`, cada uno con su id.", "8": "`formato.pesos` con seis montos con nombre: 0, 999, 1000 (primer separador), 9000, 22500 y 1234567 (dos separadores)." }
     },
     "fail-fast": {
       "tipo": "bp", "titulo": "Fail fast con errores descriptivos",
@@ -241,7 +244,7 @@
       "tipo": "bp", "titulo": "Prueba de mutación",
       "ref": "Mutation testing",
       "que": "Se cambia el código a propósito (una *mutación*) y se verifica que algún test falle. Si ninguno falla, la suite tiene un hueco.",
-      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.", "7": "16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo." }
+      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.", "6": "12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.", "7": "16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.", "8": "13 de 13 detectados: ignorar el interruptor de zona, una sola zona para todos, agregar el offset, no convertir a hora local, otro separador de miles, sin `$ `, no respetar `None`, interruptor de contrato invertido y olvidar el formato en cada campo." }
     },
     "particiones": {
       "tipo": "istqb", "titulo": "Partición de equivalencia",
@@ -277,7 +280,7 @@
       "tipo": "norma", "titulo": "ISO 8601 / RFC 3339: fechas y horas",
       "ref": "ISO 8601; IETF RFC 3339",
       "que": "Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica UTC; con una sola zona, el texto se ordena igual que el tiempo.",
-      "pasos": { "4": "Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar." }
+      "pasos": { "4": "Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.", "8": "Con el defecto de zona horaria, cada actor guarda su hora local sin `Z` ni offset (`2026-11-14T09:00:05.000000`), algo que RFC 3339 §5.6 no permite. Las marcas dejan de ser comparables entre actores y, ordenadas como texto, `PAGADO` queda antes que `COTIZADO`." }
     },
     "e164": {
       "tipo": "norma", "titulo": "ITU-T E.164: números de teléfono",
@@ -307,7 +310,7 @@
       "tipo": "bp", "titulo": "Reloj reemplazable",
       "ref": "Seam: reloj como dependencia",
       "que": "La hora actual sale de una sola función que los tests pueden reemplazar, así las pruebas con fechas son repetibles.",
-      "pasos": { "4": "`reloj.ahora_utc()` es la única fuente de \"ahora\"; en el Paso 8 los tests la fijan con `monkeypatch` para provocar el defecto de zona horaria." }
+      "pasos": { "4": "`reloj.ahora_utc()` es la única fuente de \"ahora\"; en el Paso 8 los tests la fijan con `monkeypatch` para provocar el defecto de zona horaria.", "8": "El fixture `reloj_fijo` reemplaza `reloj.ahora_utc` con instantes de 5 en 5 segundos desde las 15:00 UTC: el desorden de la zona horaria sale siempre igual, a cualquier hora." }
     },
     "tabla-decision": {
       "tipo": "istqb", "titulo": "Prueba de tabla de decisión",
@@ -332,6 +335,18 @@
       "ref": "Evolutionary Database Design (Sadalage y Fowler)",
       "que": "El esquema de la base cambia en pasos chicos, sin perder datos. Una migración aditiva solo agrega (por ejemplo, una columna que admite nulos), así que las filas viejas siguen siendo válidas.",
       "pasos": { "6": "`CREATE TABLE IF NOT EXISTS` no toca una tabla que ya existe: al arrancar, `db.py` revisa `PRAGMA table_info` y agrega `firma` si falta. Un test parte de una base sin esa columna." }
+    },
+    "oraculo": {
+      "tipo": "istqb", "titulo": "Oráculo de prueba",
+      "ref": "Glosario ISTQB: test oracle",
+      "que": "La fuente que dice cuál es el resultado correcto de una prueba: una especificación, una norma, otro sistema o una versión anterior. Sin oráculo, un test no puede decidir si pasó.",
+      "pasos": { "8": "Cada test con el defecto prendido tiene su par con el defecto apagado. El orden de eventos de la tabla del spec y `test_flujo_completo_los_13_pasos` (Paso 7) dicen cuál es el resultado correcto." }
+    },
+    "interoperabilidad": {
+      "tipo": "norma", "titulo": "ISO/IEC 25010: interoperabilidad",
+      "ref": "ISO/IEC 25010 — Compatibilidad › Interoperabilidad",
+      "que": "Capacidad de un sistema de intercambiar información con otros y de que esos otros la puedan usar. Cambiar el tipo de un campo la rompe, aunque el dato \"sea el mismo\".",
+      "pasos": { "8": "Con el defecto de contrato, `total` llega como `\"$ 22.500\"`: un cliente que lo suma o lo compara recibe texto. La página del cliente (Paso 9) muestra `NaN`." }
     }
   }
 }

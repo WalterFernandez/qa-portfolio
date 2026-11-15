@@ -2,10 +2,14 @@
 
 Cada actor vive en una zona horaria distinta (ZONAS). Sin el defecto sembrado,
 todas las marcas se guardan en UTC con sufijo "Z", así se ordenan bien como texto.
-El defecto de zona horaria se agrega en la Task 8.
+
+Defecto sembrado (cfg.defecto_zona_horaria): cada actor guarda su hora LOCAL y sin
+offset. Las marcas ya no se pueden comparar entre actores y la línea de tiempo,
+que se ordena por texto, queda desordenada.
 """
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from delivery.config import Config
 
@@ -16,6 +20,7 @@ ZONAS = {
 }
 
 FORMATO_UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
+FORMATO_LOCAL_SIN_OFFSET = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 def ahora_utc() -> datetime:
@@ -24,4 +29,7 @@ def ahora_utc() -> datetime:
 
 
 def marca_tiempo(actor: str, cfg: Config) -> str:
-    return ahora_utc().strftime(FORMATO_UTC)
+    ahora = ahora_utc()
+    if cfg.defecto_zona_horaria:
+        return ahora.astimezone(ZoneInfo(ZONAS[actor])).strftime(FORMATO_LOCAL_SIN_OFFSET)
+    return ahora.strftime(FORMATO_UTC)

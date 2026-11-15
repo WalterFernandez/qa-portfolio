@@ -283,3 +283,28 @@ def test_cancelacion_que_se_adelanta_al_pago(crear_cliente, monkeypatch):
     assert "PAGADO" not in [e["estado"] for e in p["eventos"]]
     al_delivery = c1.get("/mensajes", params={"destino": "delivery", "pedido_id": pid}).json()
     assert al_delivery == []
+
+
+def test_la_conexion_se_puede_usar_desde_otro_hilo(tmp_path):
+    """FastAPI abre la conexión (dependencia `obtener_ctx`) en un hilo del threadpool y
+    corre el endpoint en otro. Con `check_same_thread=True` (el default de sqlite3),
+    dos requests a la vez daban 500 al azar. Lo encontró el panel del Paso 10, que
+    pide /pedidos y /mensajes en paralelo. Cada conexión sigue siendo de un solo
+    request: se usa desde un hilo por vez, nunca desde dos al mismo tiempo.
+    """
+    from delivery import db
+
+    con = db.conectar(tmp_path / "hilos.db")
+    errores = []
+
+    def usar():
+        try:
+            con.execute("SELECT 1").fetchone()
+        except Exception as exc:
+            errores.append(exc)
+
+    t = threading.Thread(target=usar)
+    t.start()
+    t.join(ESPERA_S)
+    con.close()
+    assert errores == []

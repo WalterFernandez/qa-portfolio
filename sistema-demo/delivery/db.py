@@ -83,7 +83,10 @@ class Ctx:
 
 
 def conectar(db_path: Path) -> sqlite3.Connection:
-    con = sqlite3.connect(db_path)
+    # check_same_thread=False: FastAPI abre la conexión en un hilo del threadpool y
+    # corre el endpoint en otro. Es seguro porque cada conexión es de un solo request
+    # y se usa desde un hilo por vez (ver test_la_conexion_se_puede_usar_desde_otro_hilo).
+    con = sqlite3.connect(db_path, check_same_thread=False)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys = ON")
     return con

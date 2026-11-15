@@ -41,15 +41,15 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 a 6, el test se escribe antes que el código.
+- TDD y *shift-left*: pasos 1 a 7, el test se escribe antes que el código.
 - *Smoke test*: `GET /salud` (paso 1).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
-- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5); un doble clic en “Pagar” no cobra dos veces (paso 6).
-- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5); el pago recorre `COTIZADO → PAGADO → ASIGNADO` y firmar o pagar fuera de `COTIZADO` da 409 (paso 6).
+- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5); un doble clic en “Pagar” no cobra dos veces (paso 6); el delivery no cierra sin la confirmación del cliente y no se cancela con el pago hecho, ni siquiera a la vez (paso 7).
+- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5); el pago recorre `COTIZADO → PAGADO → ASIGNADO` y firmar o pagar fuera de `COTIZADO` da 409 (paso 6); el recorrido `ASIGNADO → … → CERRADO` y las 6 transiciones del cierre en los dos órdenes (paso 7).
 - Prueba de componente (nivel unitario, sin HTTP ni base): paso 3.
-- Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): pasos 4 a 6.
-- Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5); formato y largo de la firma (paso 6).
-- Tabla de decisión: estado × firma para el pago (paso 6).
+- Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): pasos 4 a 6; los 13 pasos de punta a punta (paso 7).
+- Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5); formato y largo de la firma (paso 6); quién cancela y un estado por tramo pagado (paso 7).
+- Tabla de decisión: estado × firma para el pago (paso 6); estado de partida × quién cancela (paso 7).
 - Próximamente: defectos sembrados (paso 8).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
@@ -81,9 +81,9 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 
 ### Dónde lo aplicamos en este proyecto
 
-- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 y 6).
+- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (pasos 5 a 7), completitud: los 13 pasos del negocio (paso 7).
 - UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
-- RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5); 409 `firma_requerida` y `POST /pago` idempotente aunque la norma no lo exija (paso 6).
+- RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5); 409 `firma_requerida` y `POST /pago` idempotente aunque la norma no lo exija (paso 6); 404 en las 9 rutas de un pedido, 409 `no_cancelable` y 422 con `por` inválido (paso 7).
 - ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4).
 - ITU-T E.164: máximo de 15 dígitos en el teléfono (paso 4).
 - ISO 6709: latitud en [-90, 90] y longitud en [-180, 180] (paso 5).
@@ -126,6 +126,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 4: validación de entrada por lista blanca (OWASP), un solo camino para cambiar el estado, doble de prueba (*fake*) para el WhatsApp, reloj reemplazable, prueba de mutación (3 de 3).
 - Paso 5: el total lo calcula el servidor con el catálogo (fuente única), lista blanca contra `total`, dinero en enteros, validar todo antes de escribir (*fail fast*) en una sola transacción, prueba de mutación (6 de 6, con un caso sumado por una sobreviviente).
 - Paso 6: pago idempotente, firma por lista blanca, migración de esquema aditiva, pago y asignación en una sola transacción, primero el estado y después la firma (*fail fast*), control de concurrencia optimista contra la carrera del pago, prueba de mutación (12 de 12 y 7 de 7).
+- Paso 7: concurrencia optimista en las confirmaciones (reintento único) y en cancelar contra pagar, retiro y aviso en una sola transacción, `no_cancelable` con un mensaje por caso (*fail fast*), tests parametrizados por regla y por ruta, prueba de mutación (16 de 16).
 
 ---
 
@@ -152,6 +153,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 41 tests de cotización escritos antes que `cargar_datos`: fallaron con 405 porque la ruta `PUT` no existía.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 32 tests de firma y pago fallaron con 404 (no existían las rutas) antes de escribir `firmar` y `pagar`.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Los 41 tests nuevos (entrega, cancelación, rutas 404 y carreras) fallaron con 404 porque las rutas no existían, antes de escribir `marcar_retirado`, `_confirmar` y `cancelar`.
 
 <a id="smoke-test"></a>
 
@@ -215,6 +217,7 @@ Priorizar qué probar según la probabilidad y el impacto de que algo salga mal.
 - [Paso 3](paso-03-maquina-de-estados.md): Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Riesgo: cobrar dos veces por un doble clic en “Pagar”. Mitigación: el pago es idempotente, también con dos pagos simultáneos. Riesgo conocido y aceptado: sin autenticación, quien conozca el id puede firmar o pagar (IDOR); queda para las pruebas de seguridad de una etapa posterior.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Riesgo: que el delivery cierre un pedido que el cliente no recibió. Mitigación: el cierre exige las dos confirmaciones. Riesgo: cancelar con el pago hecho, también si cancelar y pagar llegan a la vez. Mitigación: `no_cancelable`, probado en los dos órdenes.
 
 <a id="regresion"></a>
 
@@ -242,6 +245,7 @@ Técnica de caja negra: se modela el sistema como estados y transiciones (diagra
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Al crear el pedido se recorre `INICIADO → LINK_ENVIADO` por `_avanzar`; un salto a `PAGADO` se rechaza y no deja evento.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): La carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO`; cargar dos veces choca con `COTIZADO` y da 409.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): El pago recorre `COTIZADO → PAGADO → ASIGNADO`; firmar o pagar fuera de `COTIZADO` da 409, y pagar un pedido `CANCELADO` también.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): El recorrido `ASIGNADO → RETIRADO → EN_CAMINO → EN_PUERTA → RECIBIDO/ENTREGADO → CERRADO`; retirar antes de pagar, llegar antes de retirar, confirmar antes de llegar o confirmar dos veces dan 409.
 
 <a id="cobertura-transiciones"></a>
 
@@ -254,6 +258,7 @@ El syllabus define tres niveles: todos los estados, todas las transiciones váli
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): Se logró el nivel más alto: 18/18 transiciones válidas y los 169 pares de la tabla 13 × 13.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Las 6 transiciones del cierre (`EN_PUERTA → RECIBIDO/ENTREGADO`, `RECIBIDO ↔ ENTREGADO` y las dos hacia `CERRADO`) se recorren probando las confirmaciones en los dos órdenes.
 
 <a id="prueba-componente"></a>
 
@@ -280,6 +285,7 @@ Técnica de caja negra: se dividen los datos en grupos que el sistema debería t
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono: un grupo válido (8 a 15 dígitos, con `+` opcional) y grupos inválidos (vacío, con letras, muy corto, muy largo).
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cantidad (menor a 1, de 1 a 10, mayor a 10), cantidad de items (0, 1 a 4, más de 4), dirección (vacía, con espacios en los extremos, válida, demasiado larga) y la demora en tres tramos: hasta 2 unidades, de 3 a 7 y de 8 en adelante.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): La firma en clases: PNG válido, otro formato (`jpeg`), sin prefijo, prefijo sin datos y caracteres fuera de base64.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): `por` en clases: `cliente` y `servicio` válidos; `delivery`, mayúscula, vacío, ausente y con campos de más → 422. Los estados pagados se cubren con un representante por tramo (`EN_CAMINO`, `EN_PUERTA`, `RECIBIDO`).
 
 <a id="valores-limite"></a>
 
@@ -308,6 +314,7 @@ Segundo nivel de prueba: se verifica que varias piezas funcionen juntas a travé
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Con `TestClient` cada test cruza ruta → servicio → SQLite → bandeja de mensajes, sin levantar un servidor real.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `PUT /pedidos/{id}` prueba juntos el modelo Pydantic, el servicio, el catálogo, SQLite y la bandeja de mensajes.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Ruta, servicio, SQLite y bandeja juntos: el pago deja dos eventos y el WhatsApp al delivery en la misma llamada.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): `test_flujo_completo_los_13_pasos`: desde `POST /pedidos` hasta `CERRADO` por la API, con los 12 eventos y sus actores y los 4 WhatsApp en la bandeja.
 
 <a id="tabla-decision"></a>
 
@@ -320,6 +327,7 @@ Se listan las condiciones (por ejemplo, estado y firma) y para cada combinación
 **En este proyecto:**
 
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): El pago: estado (antes de cotizar, `COTIZADO`, pagado o posterior, `CANCELADO`) × firma (sí o no) → 409 `transicion_invalida`, 409 `firma_requerida`, 200 con asignación o 200 sin cambios.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): La cancelación: estado de partida (antes del pago, pagado, final) × quién cancela (cliente o servicio) → 200 `CANCELADO` o 409 `no_cancelable` con un mensaje para cada caso. Cinco reglas, R1 a R5, con su nombre.
 
 ### 📐 Normas
 
@@ -372,6 +380,7 @@ El sistema impide modificaciones indebidas de los datos.
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Restricciones en la base: `CHECK (precio > 0)`, `FOREIGN KEY` y `PRIMARY KEY (pedido_id, plato_id)`.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Un 422 o un 409 no dejan nada a medias: se valida todo antes de escribir, y la PK `(pedido_id, plato_id)` nunca llega a dar un error 500.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Un pago rechazado no deja eventos ni mensajes, y una firma rechazada no marca el pedido como firmado.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Una cancelación rechazada deja el pedido exactamente igual que antes (el test compara el JSON completo), y una confirmación rechazada no suma eventos.
 
 <a id="recuperabilidad"></a>
 
@@ -421,6 +430,7 @@ El sistema hace todo lo que tiene que hacer (completitud) y lo hace bien (correc
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): Las 18 transiciones permitidas están todas (completitud) y ninguna de más (corrección), verificado por test.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Completitud: los 13 pasos del negocio quedan implementados y un test los recorre todos, de `INICIADO` a `CERRADO`.
 
 <a id="uml-estados"></a>
 
@@ -448,6 +458,7 @@ El pedido no se puede completar porque choca con el estado actual del recurso.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): El manejador de `main.py` traduce `TransicionInvalida` en 409 con `estado_actual` y `destino`; un test lo verifica.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cargar datos de un pedido ya cotizado: `estado_actual` `COTIZADO`, `destino` `DATOS_CARGADOS`.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Pagar sin firma → 409 `firma_requerida`; firmar o pagar fuera de `COTIZADO` → 409 `transicion_invalida`.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Cancelar un pedido pagado o finalizado → 409 `no_cancelable` con `mensaje`; confirmar dos veces o retirar fuera de orden → 409 `transicion_invalida`.
 
 <a id="http-404"></a>
 
@@ -461,6 +472,7 @@ El recurso pedido no existe en el servidor.
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `GET /pedidos/999` responde 404 con `{"error": "pedido_no_encontrado"}`, nunca un 500.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): `POST /firma` y `POST /pago` sobre el pedido 999 → 404 `pedido_no_encontrado`.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Las 9 rutas de un pedido (`GET`, `PUT`, `firma`, `pago`, `retirado`, `en-puerta`, `recibido`, `entregado`, `cancelar`) sobre el pedido 999 → 404, en un solo test parametrizado.
 
 <a id="http-422"></a>
 
@@ -475,6 +487,7 @@ El cuerpo tiene un formato válido (JSON) pero su contenido no se puede procesar
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono fuera de patrón, campos de más o un `destino` desconocido en `/mensajes` responden 422.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Body fuera de rango o con campos de más, y dos reglas que necesitan el catálogo: `plato_inexistente` y `plato_repetido`.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Firma que no es un PNG en base64, de más de 200 000 caracteres o con campos de más → 422.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): `POST /cancelar` con `por` que no es `cliente` ni `servicio`, sin `por` o con campos de más → 422.
 
 <a id="iso8601"></a>
 
@@ -636,6 +649,7 @@ Todos los cambios de una operación se guardan juntos o no se guarda ninguno.
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): `obtener_ctx` abre una conexión por request: *commit* si todo sale bien, *rollback* si algo falla.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): La carga escribe items, dirección, total, dos eventos y un mensaje en una sola transacción.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): `PAGADO`, el mensaje al delivery y `ASIGNADO` se confirman juntos o no se confirma nada.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): `RETIRADO`, el aviso "Tu pedido está en camino" y `EN_CAMINO` se confirman juntos; también la segunda confirmación y el `CERRADO`.
 
 <a id="inyeccion-dependencias"></a>
 
@@ -673,6 +687,7 @@ Entre leer un dato (*check*) y escribirlo (*use*) puede entrar otro proceso: es 
 **En este proyecto:**
 
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): `_avanzar` y `firmar` escriben con `AND estado = <el leído>`. Dos pagos simultáneos dejan un solo `PAGADO`; dos envíos simultáneos del formulario dan 200 y 409 en vez de un 500. Tres tests con dos hilos y una barrera lo reproducen siempre igual.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Estado y bandera de cada confirmación van en un solo `UPDATE` condicional. Dos confirmaciones a la vez: la que pierde relee y reintenta una vez, y hay un solo `CERRADO`. Cancelar contra pagar, en los dos órdenes: gana uno y el otro da 409.
 
 <a id="dinero-enteros"></a>
 
@@ -715,6 +730,7 @@ Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un c
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): Los 8 estados de pagado en adelante y los 8 casos de formato de firma, cada uno con su nombre.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): Reglas R1 a R5 de la cancelación, las 9 rutas del 404 y los 5 bodies inválidos de `por`, cada uno con su id.
 
 <a id="fail-fast"></a>
 
@@ -730,6 +746,7 @@ Ante una operación inválida, fallar enseguida con un error que diga qué pasó
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `PedidoNoEncontrado` y `TransicionInvalida` se traducen a HTTP en un solo lugar (`main.py`), nunca un 500.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `cargar_datos` valida estado, repetidos y platos antes del primer `INSERT`; cada rechazo trae su código (`plato_repetido`, `plato_inexistente`).
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): El pago chequea primero el estado y después la firma: un pedido sin cotizar da `transicion_invalida`, no `firma_requerida`.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): La cancelación responde `no_cancelable` con el estado real y un mensaje: "ya fue pagado" o "ya está finalizado".
 
 <a id="mutacion"></a>
 
@@ -745,6 +762,7 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): 3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.
 - [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.
 - [Paso 6](paso-06-firma-pago-y-asignacion.md): 12 defectos a propósito (sin idempotencia, sin chequeo de firma, orden invertido, límite corrido en uno, sin migración, entre otros): 12 de 12 detectados. Con el arreglo de concurrencia, 7 más (sacar la condición del `UPDATE`, ignorar `rowcount`, firmar sin condición, entre otros): 7 de 7.
+- [Paso 7](paso-07-entrega-cierre-y-cancelacion.md): 16 mutantes, los 16 detectados: sin reintento, cerrar siempre o nunca, sin bandera, cancelar sin traducir la carrera, mensajes invertidos, sin aviso, actor equivocado, `delivery` puede cancelar, entre otros. Un mutante inválido (error de sintaxis) se rehízo.
 
 <a id="validacion-entrada"></a>
 

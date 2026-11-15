@@ -31,9 +31,30 @@ class FirmaRequerida(Exception):
     """Pagar exige firma previa (Paso 6)."""
 
 
+class NoCancelable(Exception):
+    """El pedido ya fue pagado o ya terminó: no se puede cancelar."""
+
+    def __init__(self, actual: Estado) -> None:
+        self.actual = actual
+        self.mensaje = (
+            "El pedido ya está finalizado"
+            if actual in FINALES
+            else "No se puede cancelar un pedido que ya fue pagado"
+        )
+        super().__init__(self.mensaje)
+
+
 # Estados en los que el pago ya ocurrió: pagar de nuevo no hace nada (idempotencia).
 # Son todos menos los previos al pago y CANCELADO (un cancelado no se paga: 409).
 YA_PAGADOS: frozenset[Estado] = frozenset(Estado) - CANCELABLES - {Estado.CANCELADO}
+
+FINALES: frozenset[Estado] = frozenset({Estado.CERRADO, Estado.CANCELADO})
+
+# Paso 11 y 12: cada confirmación es (estado al que lleva, su bandera, la bandera del otro).
+CONFIRMACIONES = {
+    "cliente": (Estado.RECIBIDO, "recibido_cliente", "entregado_delivery"),
+    "delivery": (Estado.ENTREGADO, "entregado_delivery", "recibido_cliente"),
+}
 
 
 DEMORA_BASE_MIN = 30
@@ -193,6 +214,77 @@ def pagar(ctx: Ctx, pedido_id: int) -> None:
         f"Nuevo pedido #{pedido_id}: retirar y entregar en {fila['direccion']}", link,
     )
     _avanzar(ctx, pedido_id, Estado.ASIGNADO, "servicio")
+
+
+def marcar_retirado(ctx: Ctx, pedido_id: int) -> None:
+    """Paso 8 (el delivery retira) y paso 9 (el servicio avisa al cliente), en la misma llamada.
+
+    Primero se "toma" el pedido con el UPDATE condicional: un doble toque en
+    "Retirado" da 409 antes de mandar un segundo aviso.
+    """
+    _avanzar(ctx, pedido_id, Estado.RETIRADO, "delivery")
+    link = f"/cliente/pedido/{pedido_id}"
+    telefono = _fila(ctx, pedido_id)["telefono"]
+    mensajes.enviar(ctx, pedido_id, "cliente", telefono, "Tu pedido está en camino", link)
+    _avanzar(ctx, pedido_id, Estado.EN_CAMINO, "servicio")
+
+
+def marcar_en_puerta(ctx: Ctx, pedido_id: int) -> None:
+    """Paso 10: el delivery llega a la puerta."""
+    _avanzar(ctx, pedido_id, Estado.EN_PUERTA, "delivery")
+
+
+def _confirmar(ctx: Ctx, pedido_id: int, quien: str) -> None:
+    """Pasos 11 y 12: cada parte confirma por su lado; con las dos, paso 13: CERRADO.
+
+    Estado y bandera se escriben en un solo UPDATE condicional. Si la otra parte
+    confirmó entre nuestra lectura y nuestra escritura, el UPDATE no aplica: se
+    relee y se reintenta una vez, porque esta confirmación sigue siendo válida.
+    Si se repite la misma confirmación, el reintento da 409 (RECIBIDO -> RECIBIDO).
+    """
+    destino, propia, otra = CONFIRMACIONES[quien]
+    for intento in range(2):
+        fila = _fila(ctx, pedido_id)
+        actual = Estado(fila["estado"])
+        validar_transicion(actual, destino)
+        try:
+            _actualizar_si_sigue(
+                ctx, pedido_id, actual, destino, f"estado = ?, {propia} = 1", (destino,)
+            )
+        except TransicionInvalida:
+            if intento == 0:
+                continue
+            raise
+        _registrar_evento(ctx, pedido_id, destino, quien)
+        if fila[otra]:
+            _avanzar(ctx, pedido_id, Estado.CERRADO, "servicio")
+        return
+
+
+def confirmar_recibido(ctx: Ctx, pedido_id: int) -> None:
+    _confirmar(ctx, pedido_id, "cliente")
+
+
+def confirmar_entregado(ctx: Ctx, pedido_id: int) -> None:
+    _confirmar(ctx, pedido_id, "delivery")
+
+
+def cancelar(ctx: Ctx, pedido_id: int, por: str) -> None:
+    """Cancela un pedido que todavía no se pagó. Después del pago: 409 no_cancelable.
+
+    Si un pago se adelanta entre la lectura y la escritura, el UPDATE condicional
+    no aplica y la respuesta es la misma que si el pago hubiera llegado antes.
+    """
+    actual = Estado(_fila(ctx, pedido_id)["estado"])
+    try:
+        validar_transicion(actual, Estado.CANCELADO)
+        _actualizar_si_sigue(
+            ctx, pedido_id, actual, Estado.CANCELADO,
+            "estado = ?, cancelado_por = ?", (Estado.CANCELADO, por),
+        )
+    except TransicionInvalida as exc:
+        raise NoCancelable(exc.actual) from exc
+    _registrar_evento(ctx, pedido_id, Estado.CANCELADO, por)
 
 
 def _items(ctx: Ctx, pedido_id: int) -> list[dict]:

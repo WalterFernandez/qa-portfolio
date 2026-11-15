@@ -1,6 +1,6 @@
 """Rutas HTTP de pedidos y de la bandeja de mensajes."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
@@ -46,6 +46,13 @@ class Firma(BaseModel):
     imagen: Annotated[str, Field(max_length=FIRMA_MAX, pattern=FIRMA_PNG)]
 
 
+class Cancelacion(BaseModel):
+    """El delivery no cancela: si no puede entregar, avisa al servicio y cancela el servicio."""
+
+    model_config = ConfigDict(extra="forbid")
+    por: Literal["cliente", "servicio"]
+
+
 @router.post("/pedidos", status_code=201, tags=["pedidos"])
 def crear(body: NuevoPedido, ctx: Ctx = Depends(obtener_ctx)) -> dict:
     pedido_id = pedidos.crear_pedido(ctx, body.telefono)
@@ -85,6 +92,39 @@ def firmar(pedido_id: int, body: Firma, ctx: Ctx = Depends(obtener_ctx)) -> dict
 def pagar(pedido_id: int, ctx: Ctx = Depends(obtener_ctx)) -> dict:
     """Idempotente: pagar dos veces responde 200 con el mismo pedido."""
     pedidos.pagar(ctx, pedido_id)
+    return pedidos.obtener_pedido(ctx, pedido_id)
+
+
+@router.post("/pedidos/{pedido_id}/retirado", tags=["delivery"])
+def retirado(pedido_id: int, ctx: Ctx = Depends(obtener_ctx)) -> dict:
+    """Pasos 8-9: el delivery retira y el cliente recibe "Tu pedido está en camino"."""
+    pedidos.marcar_retirado(ctx, pedido_id)
+    return pedidos.obtener_pedido(ctx, pedido_id)
+
+
+@router.post("/pedidos/{pedido_id}/en-puerta", tags=["delivery"])
+def en_puerta(pedido_id: int, ctx: Ctx = Depends(obtener_ctx)) -> dict:
+    pedidos.marcar_en_puerta(ctx, pedido_id)
+    return pedidos.obtener_pedido(ctx, pedido_id)
+
+
+@router.post("/pedidos/{pedido_id}/recibido", tags=["pedidos"])
+def recibido(pedido_id: int, ctx: Ctx = Depends(obtener_ctx)) -> dict:
+    """Paso 11: confirma el cliente. Si el delivery ya confirmó, cierra el pedido."""
+    pedidos.confirmar_recibido(ctx, pedido_id)
+    return pedidos.obtener_pedido(ctx, pedido_id)
+
+
+@router.post("/pedidos/{pedido_id}/entregado", tags=["delivery"])
+def entregado(pedido_id: int, ctx: Ctx = Depends(obtener_ctx)) -> dict:
+    """Paso 12: confirma el delivery. Si el cliente ya confirmó, cierra el pedido."""
+    pedidos.confirmar_entregado(ctx, pedido_id)
+    return pedidos.obtener_pedido(ctx, pedido_id)
+
+
+@router.post("/pedidos/{pedido_id}/cancelar", tags=["pedidos"])
+def cancelar(pedido_id: int, body: Cancelacion, ctx: Ctx = Depends(obtener_ctx)) -> dict:
+    pedidos.cancelar(ctx, pedido_id, body.por)
     return pedidos.obtener_pedido(ctx, pedido_id)
 
 

@@ -44,3 +44,30 @@ def pedido_cotizado(cliente, pedido_nuevo) -> int:
     """Id de un pedido en COTIZADO (listo para firmar y pagar)."""
     cliente.put(f"/pedidos/{pedido_nuevo}", json=DATOS_OK)
     return pedido_nuevo
+
+
+@pytest.fixture
+def pedido_asignado(cliente, pedido_cotizado) -> int:
+    """Id de un pedido firmado y pagado, en ASIGNADO (listo para que el delivery lo retire)."""
+    cliente.post(f"/pedidos/{pedido_cotizado}/firma", json={"imagen": FIRMA_OK})
+    cliente.post(f"/pedidos/{pedido_cotizado}/pago")
+    return pedido_cotizado
+
+
+# Camino feliz desde ASIGNADO: (ruta, estado en el que queda el pedido).
+RECORRIDO = [
+    ("retirado", "EN_CAMINO"),
+    ("en-puerta", "EN_PUERTA"),
+    ("recibido", "RECIBIDO"),
+    ("entregado", "CERRADO"),
+]
+
+
+def avanzar_hasta(cliente, pedido_id: int, estado: str) -> None:
+    """Lleva un pedido ASIGNADO hasta `estado` usando solo la API."""
+    for ruta, queda in RECORRIDO:
+        r = cliente.post(f"/pedidos/{pedido_id}/{ruta}")
+        assert r.status_code == 200, r.json()
+        if queda == estado:
+            return
+    raise AssertionError(f"{estado} no está en el recorrido")

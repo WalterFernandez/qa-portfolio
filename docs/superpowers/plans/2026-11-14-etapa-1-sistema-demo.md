@@ -285,7 +285,7 @@ def test_firmar_antes_de_cotizar_da_409(cliente, pedido_nuevo): ...
   - Rutas: `POST /pedidos/{id}/retirado`, `/en-puerta`, `/recibido`, `/entregado`, `/cancelar` (body `{"por": "cliente"|"servicio"}`).
   - Fixture `pedido_asignado`.
 
-- [ ] **Step 1: Tests que fallan**
+- [x] **Step 1: Tests que fallan**
   - `test_flujo_completo_los_13_pasos`: desde `POST /pedidos` hasta `CERRADO`. Afirma la lista exacta de estados de `eventos` (12 eventos, de `INICIADO` a `CERRADO`, con `RECIBIDO` antes de `ENTREGADO`) y 4 mensajes en la bandeja (link al cliente, cotización, delivery, en camino).
   - `test_entregado_antes_que_recibido_tambien_cierra`: orden inverso → `CERRADO`.
   - `test_cerrar_requiere_las_dos_confirmaciones`: solo `recibido` → estado `RECIBIDO`, no `CERRADO`.
@@ -293,10 +293,10 @@ def test_firmar_antes_de_cotizar_da_409(cliente, pedido_nuevo): ...
   - `test_retirado_antes_de_pagar_da_409` (pedido en `COTIZADO`).
   - **Tabla de decisión de cancelación**, parametrizada con `(estado_de_partida, por, código_esperado)`: `LINK_ENVIADO/cliente → 200`, `COTIZADO/servicio → 200`, `ASIGNADO/cliente → 409 no_cancelable`, `CERRADO/servicio → 409`, `CANCELADO/cliente → 409`. Además: `por` inválido → 422.
   - `test_rutas_404`: parametrizar las 9 rutas de pedido (`GET`, `PUT`, `firma`, `pago`, `retirado`, `en-puerta`, `recibido`, `entregado`, `cancelar`) con id 999 → 404 `pedido_no_encontrado`.
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar.
-- [ ] **Step 4:** Correr la suite → PASS.
-- [ ] **Step 5: Commit** `feat(demo): entrega, cierre y cancelación`
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar.
+- [x] **Step 4:** Correr la suite → PASS.
+- [x] **Step 5: Commit** `feat(demo): entrega, cierre y cancelación`
 
 ### Task 8: Defectos sembrados (zona horaria y contrato)
 

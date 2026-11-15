@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from delivery import catalogo, db, rutas_pedidos
 from delivery.config import Config
 from delivery.estados import TransicionInvalida
-from delivery.pedidos import DatosInvalidos, FirmaRequerida, PedidoNoEncontrado
+from delivery.pedidos import DatosInvalidos, FirmaRequerida, NoCancelable, PedidoNoEncontrado
 
 
 def crear_app(cfg: Config | None = None) -> FastAPI:
@@ -45,6 +45,19 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
     @app.exception_handler(FirmaRequerida)
     def _409_firma(request: Request, exc: FirmaRequerida) -> JSONResponse:
         return JSONResponse(status_code=409, content={"detail": {"error": "firma_requerida"}})
+
+    @app.exception_handler(NoCancelable)
+    def _409_cancelar(request: Request, exc: NoCancelable) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": {
+                    "error": "no_cancelable",
+                    "estado_actual": exc.actual,
+                    "mensaje": exc.mensaje,
+                }
+            },
+        )
 
     @app.exception_handler(TransicionInvalida)
     def _409(request: Request, exc: TransicionInvalida) -> JSONResponse:

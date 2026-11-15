@@ -33,6 +33,7 @@ Cada fila de las tablas de normas lleva a la **ficha de su concepto** (qué es, 
 | [4](paso-04-crear-pedido-y-mensajes.md) | Crear pedido, reloj, eventos y WhatsApp simulado | `feat(demo): crear pedido con link por WhatsApp simulado` |
 | [5](paso-05-cargar-datos-y-cotizacion.md) | Cargar datos y cotización (`PUT /pedidos/{id}`) | `feat(demo): carga de datos y cotización calculada en el servidor` |
 | [6](paso-06-firma-pago-y-asignacion.md) | Firma, pago idempotente y asignación al delivery | `feat(demo): firma, pago idempotente y asignación al delivery` |
+| [7](paso-07-entrega-cierre-y-cancelacion.md) | Entrega, doble confirmación, cierre y cancelación | `feat(demo): entrega, cierre y cancelación` |
 
 ## Mapa general (hacia dónde vamos)
 

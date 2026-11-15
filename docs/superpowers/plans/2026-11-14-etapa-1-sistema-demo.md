@@ -47,9 +47,9 @@
   - `main.crear_app(cfg: Config | None = None) -> FastAPI` (guarda `cfg` en `app.state.cfg`); `main.app = crear_app()` para uvicorn.
   - Fixture `cliente(tmp_path)` → `TestClient(crear_app(Config(db_path=tmp_path / "t.db")))`; fixture `crear_cliente(tmp_path)` → función `(**flags) -> TestClient` para tests con defectos.
 
-- [ ] **Step 1:** Pedirle al usuario su nombre y mail **personales**. En `Portfolio/`: `git init`, `git config --local user.name "<nombre>"`, `git config --local user.email "<mail>"`. Escribir `.gitignore` con la lista de Global Constraints. Verificar: `git config user.email` muestra el mail personal y `git status` no lista `thoughts/`.
-- [ ] **Step 2:** `requirements.txt` con las versiones exactas del Tech Stack; `pytest.ini` con `testpaths = tests` y `pythonpath = .`. Crear el venv: `python -m venv .venv` y `.venv/Scripts/python -m pip install -r requirements.txt`.
-- [ ] **Step 3: Test que falla**
+- [x] **Step 1:** Pedirle al usuario su nombre y mail **personales**. En `Portfolio/`: `git init`, `git config --local user.name "<nombre>"`, `git config --local user.email "<mail>"`. Escribir `.gitignore` con la lista de Global Constraints. Verificar: `git config user.email` muestra el mail personal y `git status` no lista `thoughts/`.
+- [x] **Step 2:** `requirements.txt` con las versiones exactas del Tech Stack; `pytest.ini` con `testpaths = tests` y `pythonpath = .`. Crear el venv: `python -m venv .venv` y `.venv/Scripts/python -m pip install -r requirements.txt`.
+- [x] **Step 3: Test que falla**
 
 ```python
 def test_salud_informa_defectos_apagados(cliente):
@@ -62,10 +62,10 @@ def test_salud_refleja_defecto_encendido(crear_cliente):
     assert r.json()["defectos"]["contrato"] is True
 ```
 
-- [ ] **Step 4:** Correr `.venv/Scripts/python -m pytest -q` → FAIL (no existe `delivery.main`).
-- [ ] **Step 5:** Implementar `Config`, `crear_app` y `GET /salud`.
-- [ ] **Step 6:** Correr los tests → PASS. Levantar `.venv/Scripts/python -m uvicorn delivery.main:app` y abrir `http://127.0.0.1:8000/docs` (OpenAPI visible). Apagar.
-- [ ] **Step 7: Commit** `git add .gitignore sistema-demo && git commit -m "feat(demo): esqueleto FastAPI con /salud"`
+- [x] **Step 4:** Correr `.venv/Scripts/python -m pytest -q` → FAIL (no existe `delivery.main`).
+- [x] **Step 5:** Implementar `Config`, `crear_app` y `GET /salud`.
+- [x] **Step 6:** Correr los tests → PASS. Levantar `.venv/Scripts/python -m uvicorn delivery.main:app` y abrir `http://127.0.0.1:8000/docs` (OpenAPI visible). Apagar.
+- [x] **Step 7: Commit** `git add .gitignore sistema-demo && git commit -m "feat(demo): esqueleto FastAPI con /salud"`
 
 ### Task 2: Base de datos y catálogo (`GET /platos`)
 

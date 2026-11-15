@@ -147,7 +147,7 @@ def test_siembra_no_duplica_al_reiniciar(tmp_path):
   - Manejadores en `main.py`: `PedidoNoEncontrado` → 404 `{"detail": {"error": "pedido_no_encontrado"}}`; `TransicionInvalida` → 409 `{"detail": {"error": "transicion_invalida", "estado_actual": ..., "destino": ...}}`.
   - Todos los modelos Pydantic de entrada usan `model_config = ConfigDict(extra="forbid")`. Teléfono: regex `^\+?\d{8,15}$`.
 
-- [ ] **Step 1: Tests que fallan**
+- [x] **Step 1: Tests que fallan**
 
 ```python
 def test_crear_pedido_envia_link_por_whatsapp(cliente):
@@ -175,10 +175,10 @@ def test_timestamps_en_utc_con_z(cliente):
     assert all(e["ocurrido_en"].endswith("Z") for e in p["eventos"])
 ```
 
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar `reloj.py`, `mensajes.py`, `pedidos.py` (crear/obtener/listar/`_avanzar`), `rutas_pedidos.py` y los manejadores.
-- [ ] **Step 4:** Correr la suite completa → PASS.
-- [ ] **Step 5: Commit** `feat(demo): crear pedido con link por WhatsApp simulado`
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar `reloj.py`, `mensajes.py`, `pedidos.py` (crear/obtener/listar/`_avanzar`), `rutas_pedidos.py` y los manejadores.
+- [x] **Step 4:** Correr la suite completa → PASS.
+- [x] **Step 5: Commit** `feat(demo): crear pedido con link por WhatsApp simulado`
 
 ### Task 5: Cargar datos y cotización (pasos 4–5)
 

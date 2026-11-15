@@ -3,7 +3,8 @@
   "filas": {
     "1": ["tdd", "smoke-test", "shift-left", "gestion-configuracion", "defect-seeding", "capacidad-prueba", "openapi", "json", "twelve-factor", "application-factory", "first", "conventional-commits", "pep405"],
     "2": ["tdd", "riesgos", "regresion", "integridad", "recuperabilidad", "sql", "metodos-seguros", "owasp-sql", "3fn", "unit-of-work", "inyeccion-dependencias", "idempotencia", "dinero-enteros"],
-    "3": ["transicion-estados", "cobertura-transiciones", "tdd", "prueba-componente", "riesgos", "adecuacion-funcional", "uml-estados", "http-409", "table-driven", "parametrizados", "fail-fast", "mutacion"]
+    "3": ["transicion-estados", "cobertura-transiciones", "tdd", "prueba-componente", "riesgos", "adecuacion-funcional", "uml-estados", "http-409", "table-driven", "parametrizados", "fail-fast", "mutacion"],
+    "4": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "http-404", "http-409", "http-422", "recuperabilidad", "iso8601", "e164", "validacion-entrada", "table-driven", "fail-fast", "doble-prueba", "reloj-inyectable", "parametrizados", "mutacion"]
   },
   "terminos": {
     "tdd": {
@@ -13,7 +14,8 @@
       "pasos": {
         "1": "El primer test fue `GET /salud`; falló porque no existía `delivery.main`, y recién ahí se escribió la app.",
         "2": "Los tests del catálogo fallaron con 404 en `/platos` antes de crear la base y la ruta.",
-        "3": "`test_estados.py` falló porque no existía `delivery.estados`; después se escribió la máquina de estados."
+        "3": "`test_estados.py` falló porque no existía `delivery.estados`; después se escribió la máquina de estados.",
+        "4": "Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código."
       }
     },
     "smoke-test": {
@@ -116,7 +118,7 @@
       "tipo": "norma", "titulo": "ISO/IEC 25010: capacidad de recuperación",
       "ref": "ISO/IEC 25010 — Fiabilidad › Capacidad de recuperación",
       "que": "Ante una interrupción, el sistema recupera los datos y su estado.",
-      "pasos": { "2": "La base es un archivo SQLite: al reiniciar el servidor los datos siguen ahí." }
+      "pasos": { "2": "La base es un archivo SQLite: al reiniciar el servidor los datos siguen ahí.", "4": "`test_pedido_sobrevive_reinicio`: se crea el pedido con una app y se lee con otra sobre el mismo archivo." }
     },
     "sql": {
       "tipo": "norma", "titulo": "ISO/IEC 9075: lenguaje SQL",
@@ -170,7 +172,7 @@
       "tipo": "istqb", "titulo": "Prueba de transición de estados",
       "ref": "CTFL v4.0 §4.2.4 Prueba de transición de estados",
       "que": "Técnica de caja negra: se modela el sistema como estados y transiciones (diagrama o tabla) y se diseñan casos que recorren las transiciones válidas e intentan las inválidas.",
-      "pasos": { "3": "Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…)." }
+      "pasos": { "3": "Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…).", "4": "Al crear el pedido se recorre `INICIADO → LINK_ENVIADO` por `_avanzar`; un salto a `PAGADO` se rechaza y no deja evento." }
     },
     "cobertura-transiciones": {
       "tipo": "istqb", "titulo": "Criterios de cobertura de estados",
@@ -200,31 +202,91 @@
       "tipo": "norma", "titulo": "RFC 9110: 409 Conflict",
       "ref": "IETF RFC 9110 §15.5.10 409 Conflict",
       "que": "El pedido no se puede completar porque choca con el estado actual del recurso.",
-      "pasos": { "3": "`TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos." }
+      "pasos": { "3": "`TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos.", "4": "El manejador de `main.py` traduce `TransicionInvalida` en 409 con `estado_actual` y `destino`; un test lo verifica." }
     },
     "table-driven": {
       "tipo": "bp", "titulo": "Fuente única de verdad, diseño table-driven",
       "ref": "Single source of truth; table-driven design",
       "que": "Las reglas se escriben como datos (una tabla) en un solo lugar, no repartidas en `if` por todo el código.",
-      "pasos": { "3": "`TRANSICIONES` es un diccionario; toda mutación de estado pasará por `validar_transicion`." }
+      "pasos": { "3": "`TRANSICIONES` es un diccionario; toda mutación de estado pasará por `validar_transicion`.", "4": "`pedidos._avanzar` es el único camino para cambiar el estado: valida, actualiza y registra el evento." }
     },
     "parametrizados": {
       "tipo": "bp", "titulo": "Tests parametrizados",
       "ref": "pytest.mark.parametrize",
       "que": "Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un caso separado en el reporte.",
-      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…)." }
+      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).", "4": "Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…" }
     },
     "fail-fast": {
       "tipo": "bp", "titulo": "Fail fast con errores descriptivos",
       "ref": "Fail fast",
       "que": "Ante una operación inválida, fallar enseguida con un error que diga qué pasó, en vez de seguir con datos corruptos.",
-      "pasos": { "3": "`TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó." }
+      "pasos": { "3": "`TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó.", "4": "`PedidoNoEncontrado` y `TransicionInvalida` se traducen a HTTP en un solo lugar (`main.py`), nunca un 500." }
     },
     "mutacion": {
       "tipo": "bp", "titulo": "Prueba de mutación",
       "ref": "Mutation testing",
       "que": "Se cambia el código a propósito (una *mutación*) y se verifica que algún test falle. Si ninguno falla, la suite tiene un hueco.",
-      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió." }
+      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos." }
+    },
+    "particiones": {
+      "tipo": "istqb", "titulo": "Partición de equivalencia",
+      "ref": "CTFL v4.0 §4.2.1 Partición de equivalencia",
+      "que": "Técnica de caja negra: se dividen los datos en grupos que el sistema debería tratar igual, y se prueba al menos un valor de cada grupo, válido o inválido.",
+      "pasos": { "4": "Teléfono: un grupo válido (8 a 15 dígitos, con `+` opcional) y grupos inválidos (vacío, con letras, muy corto, muy largo)." }
+    },
+    "valores-limite": {
+      "tipo": "istqb", "titulo": "Análisis de valores límite",
+      "ref": "CTFL v4.0 §4.2.2 Análisis de valores límite",
+      "que": "Los defectos se concentran en los bordes de cada partición. Con 2 valores por borde se prueba el límite y su vecino del lado de afuera.",
+      "pasos": { "4": "Bordes del teléfono: 8 y 15 dígitos dan 201; 7 y 16 dan 422." }
+    },
+    "integracion-componentes": {
+      "tipo": "istqb", "titulo": "Prueba de integración de componentes",
+      "ref": "CTFL v4.0 §2.2.1 Niveles de prueba",
+      "que": "Segundo nivel de prueba: se verifica que varias piezas funcionen juntas a través de sus interfaces.",
+      "pasos": { "4": "Con `TestClient` cada test cruza ruta → servicio → SQLite → bandeja de mensajes, sin levantar un servidor real." }
+    },
+    "http-404": {
+      "tipo": "norma", "titulo": "RFC 9110: 404 Not Found",
+      "ref": "IETF RFC 9110 §15.5.5 404 Not Found",
+      "que": "El recurso pedido no existe en el servidor.",
+      "pasos": { "4": "`GET /pedidos/999` responde 404 con `{\"error\": \"pedido_no_encontrado\"}`, nunca un 500." }
+    },
+    "http-422": {
+      "tipo": "norma", "titulo": "RFC 9110: 422 Unprocessable Content",
+      "ref": "IETF RFC 9110 §15.5.21 422 Unprocessable Content",
+      "que": "El cuerpo tiene un formato válido (JSON) pero su contenido no se puede procesar.",
+      "pasos": { "4": "Teléfono fuera de patrón, campos de más o un `destino` desconocido en `/mensajes` responden 422." }
+    },
+    "iso8601": {
+      "tipo": "norma", "titulo": "ISO 8601 / RFC 3339: fechas y horas",
+      "ref": "ISO 8601; IETF RFC 3339",
+      "que": "Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica UTC; con una sola zona, el texto se ordena igual que el tiempo.",
+      "pasos": { "4": "Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar." }
+    },
+    "e164": {
+      "tipo": "norma", "titulo": "ITU-T E.164: números de teléfono",
+      "ref": "ITU-T Recommendation E.164",
+      "que": "Plan internacional de numeración telefónica: como máximo 15 dígitos, con el código de país adelante.",
+      "pasos": { "4": "El patrón `^\\+?\\d{8,15}$` toma de E.164 el máximo de 15 dígitos." }
+    },
+    "validacion-entrada": {
+      "tipo": "bp", "titulo": "Validación de entrada por lista blanca",
+      "ref": "OWASP Input Validation Cheat Sheet",
+      "que": "Aceptar solo lo que se sabe válido (lista blanca) y rechazar todo lo demás en la frontera del sistema, antes de que llegue a la lógica.",
+      "pasos": { "4": "Los modelos Pydantic usan `extra=\"forbid\"`: un cliente que manda `\"estado\": \"PAGADO\"` al crear el pedido recibe 422." }
+    },
+    "doble-prueba": {
+      "tipo": "bp", "titulo": "Doble de prueba (fake)",
+      "ref": "Test double: fake (Meszaros, xUnit Test Patterns)",
+      "que": "Una implementación simple que reemplaza a un servicio real (una pasarela, un canal de mensajes) y permite ver qué se le pidió.",
+      "pasos": { "4": "El WhatsApp es simulado: cada mensaje queda en la tabla `mensajes` y se lee con `GET /mensajes`, como si fuera el celular del destinatario." }
+    },
+    "reloj-inyectable": {
+      "tipo": "bp", "titulo": "Reloj reemplazable",
+      "ref": "Seam: reloj como dependencia",
+      "que": "La hora actual sale de una sola función que los tests pueden reemplazar, así las pruebas con fechas son repetibles.",
+      "pasos": { "4": "`reloj.ahora_utc()` es la única fuente de \"ahora\"; en el Paso 8 los tests la fijan con `monkeypatch` para provocar el defecto de zona horaria." }
     }
   }
 }

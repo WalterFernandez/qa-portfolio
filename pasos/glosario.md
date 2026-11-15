@@ -41,13 +41,15 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 a 3, el test se escribe antes que el código.
+- TDD y *shift-left*: pasos 1 a 4, el test se escribe antes que el código.
 - *Smoke test*: `GET /salud` (paso 1).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
 - Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3).
-- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3).
+- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4).
 - Prueba de componente (nivel unitario, sin HTTP ni base): paso 3.
-- Próximamente: valores límite y particiones (paso 5), defectos sembrados (paso 8).
+- Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): paso 4.
+- Partición de equivalencia y valores límite: el teléfono (paso 4).
+- Próximamente: valores límite en cantidades y coordenadas (paso 5), defectos sembrados (paso 8).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
 
@@ -78,9 +80,11 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 
 ### Dónde lo aplicamos en este proyecto
 
-- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3).
+- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4).
 - UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
-- RFC 9110: `GET` solo lee (paso 2). Próximamente: códigos 404, 409 (preparado en el paso 3) y 422.
+- RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4).
+- ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4).
+- ITU-T E.164: máximo de 15 dígitos en el teléfono (paso 4).
 - OpenAPI 3.1: documentación automática en `/docs` (paso 1). En la etapa 2, contrato JSON Schema.
 - ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).
 
@@ -116,6 +120,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 1: Twelve-Factor (configuración), Application Factory, FIRST, Conventional Commits, PEP 405.
 - Paso 2: OWASP (SQL parametrizado), 3FN, Unit of Work, inyección de dependencias, siembra idempotente, dinero en enteros.
 - Paso 3: fuente única de verdad y diseño *table-driven*, tests parametrizados, *fail fast*, prueba de mutación manual.
+- Paso 4: validación de entrada por lista blanca (OWASP), un solo camino para cambiar el estado, doble de prueba (*fake*) para el WhatsApp, reloj reemplazable, prueba de mutación (3 de 3).
 
 ---
 
@@ -139,6 +144,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - [Paso 1](paso-01-esqueleto-y-salud.md): El primer test fue `GET /salud`; falló porque no existía `delivery.main`, y recién ahí se escribió la app.
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Los tests del catálogo fallaron con 404 en `/platos` antes de crear la base y la ruta.
 - [Paso 3](paso-03-maquina-de-estados.md): `test_estados.py` falló porque no existía `delivery.estados`; después se escribió la máquina de estados.
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código.
 
 <a id="smoke-test"></a>
 
@@ -224,6 +230,7 @@ Técnica de caja negra: se modela el sistema como estados y transiciones (diagra
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…).
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Al crear el pedido se recorre `INICIADO → LINK_ENVIADO` por `_avanzar`; un salto a `PAGADO` se rechaza y no deja evento.
 
 <a id="cobertura-transiciones"></a>
 
@@ -248,6 +255,42 @@ Primer nivel de prueba: se prueba una pieza aislada, sin sus dependencias extern
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): `estados.py` se prueba sin HTTP ni SQLite; la cobertura fina queda en este nivel, el más barato.
+
+<a id="particiones"></a>
+
+#### Partición de equivalencia
+
+📘 ISTQB · **Referencia:** CTFL v4.0 §4.2.1 Partición de equivalencia
+
+Técnica de caja negra: se dividen los datos en grupos que el sistema debería tratar igual, y se prueba al menos un valor de cada grupo, válido o inválido.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono: un grupo válido (8 a 15 dígitos, con `+` opcional) y grupos inválidos (vacío, con letras, muy corto, muy largo).
+
+<a id="valores-limite"></a>
+
+#### Análisis de valores límite
+
+📘 ISTQB · **Referencia:** CTFL v4.0 §4.2.2 Análisis de valores límite
+
+Los defectos se concentran en los bordes de cada partición. Con 2 valores por borde se prueba el límite y su vecino del lado de afuera.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Bordes del teléfono: 8 y 15 dígitos dan 201; 7 y 16 dan 422.
+
+<a id="integracion-componentes"></a>
+
+#### Prueba de integración de componentes
+
+📘 ISTQB · **Referencia:** CTFL v4.0 §2.2.1 Niveles de prueba
+
+Segundo nivel de prueba: se verifica que varias piezas funcionen juntas a través de sus interfaces.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Con `TestClient` cada test cruza ruta → servicio → SQLite → bandeja de mensajes, sin levantar un servidor real.
 
 ### 📐 Normas
 
@@ -310,6 +353,7 @@ Ante una interrupción, el sistema recupera los datos y su estado.
 **En este proyecto:**
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): La base es un archivo SQLite: al reiniciar el servidor los datos siguen ahí.
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): `test_pedido_sobrevive_reinicio`: se crea el pedido con una app y se lee con otra sobre el mismo archivo.
 
 <a id="sql"></a>
 
@@ -370,6 +414,55 @@ El pedido no se puede completar porque choca con el estado actual del recurso.
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): `TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos.
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): El manejador de `main.py` traduce `TransicionInvalida` en 409 con `estado_actual` y `destino`; un test lo verifica.
+
+<a id="http-404"></a>
+
+#### RFC 9110: 404 Not Found
+
+📐 Norma · **Referencia:** IETF RFC 9110 §15.5.5 404 Not Found
+
+El recurso pedido no existe en el servidor.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): `GET /pedidos/999` responde 404 con `{"error": "pedido_no_encontrado"}`, nunca un 500.
+
+<a id="http-422"></a>
+
+#### RFC 9110: 422 Unprocessable Content
+
+📐 Norma · **Referencia:** IETF RFC 9110 §15.5.21 422 Unprocessable Content
+
+El cuerpo tiene un formato válido (JSON) pero su contenido no se puede procesar.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono fuera de patrón, campos de más o un `destino` desconocido en `/mensajes` responden 422.
+
+<a id="iso8601"></a>
+
+#### ISO 8601 / RFC 3339: fechas y horas
+
+📐 Norma · **Referencia:** ISO 8601; IETF RFC 3339
+
+Formato estándar de fecha y hora (`2026-11-15T13:43:08.029362Z`). La `Z` indica UTC; con una sola zona, el texto se ordena igual que el tiempo.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Toda marca de tiempo sale de `reloj.marca_tiempo` en UTC con `Z`, y un test lo verifica. Riesgo observado: el reloj de Windows avanza cada 15,6 ms, así que los dos eventos del alta suelen empatar.
+
+<a id="e164"></a>
+
+#### ITU-T E.164: números de teléfono
+
+📐 Norma · **Referencia:** ITU-T Recommendation E.164
+
+Plan internacional de numeración telefónica: como máximo 15 dígitos, con el código de país adelante.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): El patrón `^\+?\d{8,15}$` toma de E.164 el máximo de 15 dígitos.
 
 ### ✅ Buenas prácticas
 
@@ -517,6 +610,7 @@ Las reglas se escriben como datos (una tabla) en un solo lugar, no repartidas en
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): `TRANSICIONES` es un diccionario; toda mutación de estado pasará por `validar_transicion`.
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): `pedidos._avanzar` es el único camino para cambiar el estado: valida, actualiza y registra el evento.
 
 <a id="parametrizados"></a>
 
@@ -529,6 +623,7 @@ Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un c
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…
 
 <a id="fail-fast"></a>
 
@@ -541,6 +636,7 @@ Ante una operación inválida, fallar enseguida con un error que diga qué pasó
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): `TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó.
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): `PedidoNoEncontrado` y `TransicionInvalida` se traducen a HTTP en un solo lugar (`main.py`), nunca un 500.
 
 <a id="mutacion"></a>
 
@@ -553,5 +649,42 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 **En este proyecto:**
 
 - [Paso 3](paso-03-maquina-de-estados.md): Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): 3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.
+
+<a id="validacion-entrada"></a>
+
+#### Validación de entrada por lista blanca
+
+✅ Buena práctica · **Referencia:** OWASP Input Validation Cheat Sheet
+
+Aceptar solo lo que se sabe válido (lista blanca) y rechazar todo lo demás en la frontera del sistema, antes de que llegue a la lógica.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los modelos Pydantic usan `extra="forbid"`: un cliente que manda `"estado": "PAGADO"` al crear el pedido recibe 422.
+
+<a id="doble-prueba"></a>
+
+#### Doble de prueba (fake)
+
+✅ Buena práctica · **Referencia:** Test double: fake (Meszaros, xUnit Test Patterns)
+
+Una implementación simple que reemplaza a un servicio real (una pasarela, un canal de mensajes) y permite ver qué se le pidió.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): El WhatsApp es simulado: cada mensaje queda en la tabla `mensajes` y se lee con `GET /mensajes`, como si fuera el celular del destinatario.
+
+<a id="reloj-inyectable"></a>
+
+#### Reloj reemplazable
+
+✅ Buena práctica · **Referencia:** Seam: reloj como dependencia
+
+La hora actual sale de una sola función que los tests pueden reemplazar, así las pruebas con fechas son repetibles.
+
+**En este proyecto:**
+
+- [Paso 4](paso-04-crear-pedido-y-mensajes.md): `reloj.ahora_utc()` es la única fuente de "ahora"; en el Paso 8 los tests la fijan con `monkeypatch` para provocar el defecto de zona horaria.
 
 <!-- TERMINOS:FIN -->

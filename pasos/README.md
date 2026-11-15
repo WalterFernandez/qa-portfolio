@@ -30,6 +30,7 @@ Cada fila de las tablas de normas lleva a la **ficha de su concepto** (qué es, 
 | [1](paso-01-esqueleto-y-salud.md) | Esqueleto del proyecto, git y `GET /salud` | `feat(demo): esqueleto FastAPI con /salud` |
 | [2](paso-02-base-de-datos-y-catalogo.md) | Base SQLite y catálogo (`GET /platos`) | `feat(demo): base SQLite y catálogo` |
 | [3](paso-03-maquina-de-estados.md) | Máquina de estados del pedido | `feat(demo): máquina de estados del pedido` |
+| [4](paso-04-crear-pedido-y-mensajes.md) | Crear pedido, reloj, eventos y WhatsApp simulado | `feat(demo): crear pedido con link por WhatsApp simulado` |
 
 ## Mapa general (hacia dónde vamos)
 

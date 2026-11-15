@@ -18,3 +18,18 @@ def crear_cliente(tmp_path):
 @pytest.fixture
 def cliente(crear_cliente):
     return crear_cliente()
+
+
+# Datos válidos para cargar un pedido (Paso 4): 2 docenas de empanadas + 1 flan.
+DATOS_OK = {
+    "items": [{"plato_id": 1, "cantidad": 2}, {"plato_id": 4, "cantidad": 1}],
+    "direccion": "Av. Siempre Viva 742",
+    "lat": -34.6,
+    "lng": -58.4,
+}
+
+
+@pytest.fixture
+def pedido_nuevo(cliente) -> int:
+    """Id de un pedido recién creado, en LINK_ENVIADO (listo para cargar datos)."""
+    return cliente.post("/pedidos", json={"telefono": "1122334455"}).json()["id"]

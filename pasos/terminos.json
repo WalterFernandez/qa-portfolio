@@ -4,7 +4,8 @@
     "1": ["tdd", "smoke-test", "shift-left", "gestion-configuracion", "defect-seeding", "capacidad-prueba", "openapi", "json", "twelve-factor", "application-factory", "first", "conventional-commits", "pep405"],
     "2": ["tdd", "riesgos", "regresion", "integridad", "recuperabilidad", "sql", "metodos-seguros", "owasp-sql", "3fn", "unit-of-work", "inyeccion-dependencias", "idempotencia", "dinero-enteros"],
     "3": ["transicion-estados", "cobertura-transiciones", "tdd", "prueba-componente", "riesgos", "adecuacion-funcional", "uml-estados", "http-409", "table-driven", "parametrizados", "fail-fast", "mutacion"],
-    "4": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "http-404", "http-409", "http-422", "recuperabilidad", "iso8601", "e164", "validacion-entrada", "table-driven", "fail-fast", "doble-prueba", "reloj-inyectable", "parametrizados", "mutacion"]
+    "4": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "http-404", "http-409", "http-422", "recuperabilidad", "iso8601", "e164", "validacion-entrada", "table-driven", "fail-fast", "doble-prueba", "reloj-inyectable", "parametrizados", "mutacion"],
+    "5": ["particiones", "valores-limite", "tdd", "integracion-componentes", "transicion-estados", "riesgos", "http-409", "http-422", "integridad", "iso6709", "validacion-entrada", "dinero-enteros", "unit-of-work", "fail-fast", "table-driven", "parametrizados", "mutacion"]
   },
   "terminos": {
     "tdd": {
@@ -15,7 +16,8 @@
         "1": "El primer test fue `GET /salud`; falló porque no existía `delivery.main`, y recién ahí se escribió la app.",
         "2": "Los tests del catálogo fallaron con 404 en `/platos` antes de crear la base y la ruta.",
         "3": "`test_estados.py` falló porque no existía `delivery.estados`; después se escribió la máquina de estados.",
-        "4": "Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código."
+        "4": "Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código.",
+        "5": "41 tests de cotización escritos antes que `cargar_datos`: fallaron con 405 porque la ruta `PUT` no existía."
       }
     },
     "smoke-test": {
@@ -99,7 +101,8 @@
       "que": "Priorizar qué probar según la probabilidad y el impacto de que algo salga mal. Los riesgos de producto más graves se mitigan primero.",
       "pasos": {
         "2": "Riesgo: cobro incorrecto. Mitigación: el precio lo fija el servidor y se guarda en enteros.",
-        "3": "Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago."
+        "3": "Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago.",
+        "5": "Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo."
       }
     },
     "regresion": {
@@ -112,7 +115,7 @@
       "tipo": "norma", "titulo": "ISO/IEC 25010: integridad",
       "ref": "ISO/IEC 25010 — Seguridad › Integridad",
       "que": "El sistema impide modificaciones indebidas de los datos.",
-      "pasos": { "2": "Restricciones en la base: `CHECK (precio > 0)`, `FOREIGN KEY` y `PRIMARY KEY (pedido_id, plato_id)`." }
+      "pasos": { "2": "Restricciones en la base: `CHECK (precio > 0)`, `FOREIGN KEY` y `PRIMARY KEY (pedido_id, plato_id)`.", "5": "Un 422 o un 409 no dejan nada a medias: se valida todo antes de escribir, y la PK `(pedido_id, plato_id)` nunca llega a dar un error 500." }
     },
     "recuperabilidad": {
       "tipo": "norma", "titulo": "ISO/IEC 25010: capacidad de recuperación",
@@ -148,7 +151,7 @@
       "tipo": "bp", "titulo": "Patrón Unit of Work",
       "ref": "Patrón Unit of Work (Fowler, PoEAA)",
       "que": "Todos los cambios de una operación se guardan juntos o no se guarda ninguno.",
-      "pasos": { "2": "`obtener_ctx` abre una conexión por request: *commit* si todo sale bien, *rollback* si algo falla." }
+      "pasos": { "2": "`obtener_ctx` abre una conexión por request: *commit* si todo sale bien, *rollback* si algo falla.", "5": "La carga escribe items, dirección, total, dos eventos y un mensaje en una sola transacción." }
     },
     "inyeccion-dependencias": {
       "tipo": "bp", "titulo": "Inyección de dependencias",
@@ -166,13 +169,13 @@
       "tipo": "bp", "titulo": "Dinero en unidades enteras",
       "ref": "Evitar coma flotante binaria (IEEE 754) con dinero",
       "que": "Los `float` tienen errores de redondeo (`0.1 + 0.2 = 0.30000000000000004`). Con dinero se usan enteros.",
-      "pasos": { "2": "Los precios son `int` en pesos y un test verifica el tipo." }
+      "pasos": { "2": "Los precios son `int` en pesos y un test verifica el tipo.", "5": "El total es la suma de `cantidad × precio_unitario` en pesos enteros: `2 × 9000 + 4500 = 22500`." }
     },
     "transicion-estados": {
       "tipo": "istqb", "titulo": "Prueba de transición de estados",
       "ref": "CTFL v4.0 §4.2.4 Prueba de transición de estados",
       "que": "Técnica de caja negra: se modela el sistema como estados y transiciones (diagrama o tabla) y se diseñan casos que recorren las transiciones válidas e intentan las inválidas.",
-      "pasos": { "3": "Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…).", "4": "Al crear el pedido se recorre `INICIADO → LINK_ENVIADO` por `_avanzar`; un salto a `PAGADO` se rechaza y no deja evento." }
+      "pasos": { "3": "Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…).", "4": "Al crear el pedido se recorre `INICIADO → LINK_ENVIADO` por `_avanzar`; un salto a `PAGADO` se rechaza y no deja evento.", "5": "La carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO`; cargar dos veces choca con `COTIZADO` y da 409." }
     },
     "cobertura-transiciones": {
       "tipo": "istqb", "titulo": "Criterios de cobertura de estados",
@@ -202,49 +205,49 @@
       "tipo": "norma", "titulo": "RFC 9110: 409 Conflict",
       "ref": "IETF RFC 9110 §15.5.10 409 Conflict",
       "que": "El pedido no se puede completar porque choca con el estado actual del recurso.",
-      "pasos": { "3": "`TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos.", "4": "El manejador de `main.py` traduce `TransicionInvalida` en 409 con `estado_actual` y `destino`; un test lo verifica." }
+      "pasos": { "3": "`TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos.", "4": "El manejador de `main.py` traduce `TransicionInvalida` en 409 con `estado_actual` y `destino`; un test lo verifica.", "5": "Cargar datos de un pedido ya cotizado: `estado_actual` `COTIZADO`, `destino` `DATOS_CARGADOS`." }
     },
     "table-driven": {
       "tipo": "bp", "titulo": "Fuente única de verdad, diseño table-driven",
       "ref": "Single source of truth; table-driven design",
       "que": "Las reglas se escriben como datos (una tabla) en un solo lugar, no repartidas en `if` por todo el código.",
-      "pasos": { "3": "`TRANSICIONES` es un diccionario; toda mutación de estado pasará por `validar_transicion`.", "4": "`pedidos._avanzar` es el único camino para cambiar el estado: valida, actualiza y registra el evento." }
+      "pasos": { "3": "`TRANSICIONES` es un diccionario; toda mutación de estado pasará por `validar_transicion`.", "4": "`pedidos._avanzar` es el único camino para cambiar el estado: valida, actualiza y registra el evento.", "5": "El precio sale siempre del catálogo (`catalogo.precios`) y queda guardado en `precio_unitario`; el cliente no manda montos." }
     },
     "parametrizados": {
       "tipo": "bp", "titulo": "Tests parametrizados",
       "ref": "pytest.mark.parametrize",
       "que": "Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un caso separado en el reporte.",
-      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).", "4": "Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…" }
+      "pasos": { "3": "Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).", "4": "Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…", "5": "Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`)." }
     },
     "fail-fast": {
       "tipo": "bp", "titulo": "Fail fast con errores descriptivos",
       "ref": "Fail fast",
       "que": "Ante una operación inválida, fallar enseguida con un error que diga qué pasó, en vez de seguir con datos corruptos.",
-      "pasos": { "3": "`TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó.", "4": "`PedidoNoEncontrado` y `TransicionInvalida` se traducen a HTTP en un solo lugar (`main.py`), nunca un 500." }
+      "pasos": { "3": "`TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó.", "4": "`PedidoNoEncontrado` y `TransicionInvalida` se traducen a HTTP en un solo lugar (`main.py`), nunca un 500.", "5": "`cargar_datos` valida estado, repetidos y platos antes del primer `INSERT`; cada rechazo trae su código (`plato_repetido`, `plato_inexistente`)." }
     },
     "mutacion": {
       "tipo": "bp", "titulo": "Prueba de mutación",
       "ref": "Mutation testing",
       "que": "Se cambia el código a propósito (una *mutación*) y se verifica que algún test falle. Si ninguno falla, la suite tiene un hueco.",
-      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos." }
+      "pasos": { "3": "Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.", "4": "3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.", "5": "6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos." }
     },
     "particiones": {
       "tipo": "istqb", "titulo": "Partición de equivalencia",
       "ref": "CTFL v4.0 §4.2.1 Partición de equivalencia",
       "que": "Técnica de caja negra: se dividen los datos en grupos que el sistema debería tratar igual, y se prueba al menos un valor de cada grupo, válido o inválido.",
-      "pasos": { "4": "Teléfono: un grupo válido (8 a 15 dígitos, con `+` opcional) y grupos inválidos (vacío, con letras, muy corto, muy largo)." }
+      "pasos": { "4": "Teléfono: un grupo válido (8 a 15 dígitos, con `+` opcional) y grupos inválidos (vacío, con letras, muy corto, muy largo).", "5": "Cantidad (menor a 1, de 1 a 10, mayor a 10), cantidad de items (0, 1 a 4, más de 4), dirección (vacía, con espacios en los extremos, válida, demasiado larga) y la demora en tres tramos: hasta 2 unidades, de 3 a 7 y de 8 en adelante." }
     },
     "valores-limite": {
       "tipo": "istqb", "titulo": "Análisis de valores límite",
       "ref": "CTFL v4.0 §4.2.2 Análisis de valores límite",
       "que": "Los defectos se concentran en los bordes de cada partición. Con 2 valores por borde se prueba el límite y su vecino del lado de afuera.",
-      "pasos": { "4": "Bordes del teléfono: 8 y 15 dígitos dan 201; 7 y 16 dan 422." }
+      "pasos": { "4": "Bordes del teléfono: 8 y 15 dígitos dan 201; 7 y 16 dan 422.", "5": "Cantidad 0, 1, 10 y 11; items 0, 1, 4 y 5; dirección de 1, 200 y 201 caracteres; latitud ±90 y ±90,1; longitud ±180 y ±180,1; demora en 2|3 unidades (empieza el recargo) y 7|8 (llega al tope de 60)." }
     },
     "integracion-componentes": {
       "tipo": "istqb", "titulo": "Prueba de integración de componentes",
       "ref": "CTFL v4.0 §2.2.1 Niveles de prueba",
       "que": "Segundo nivel de prueba: se verifica que varias piezas funcionen juntas a través de sus interfaces.",
-      "pasos": { "4": "Con `TestClient` cada test cruza ruta → servicio → SQLite → bandeja de mensajes, sin levantar un servidor real." }
+      "pasos": { "4": "Con `TestClient` cada test cruza ruta → servicio → SQLite → bandeja de mensajes, sin levantar un servidor real.", "5": "`PUT /pedidos/{id}` prueba juntos el modelo Pydantic, el servicio, el catálogo, SQLite y la bandeja de mensajes." }
     },
     "http-404": {
       "tipo": "norma", "titulo": "RFC 9110: 404 Not Found",
@@ -256,7 +259,7 @@
       "tipo": "norma", "titulo": "RFC 9110: 422 Unprocessable Content",
       "ref": "IETF RFC 9110 §15.5.21 422 Unprocessable Content",
       "que": "El cuerpo tiene un formato válido (JSON) pero su contenido no se puede procesar.",
-      "pasos": { "4": "Teléfono fuera de patrón, campos de más o un `destino` desconocido en `/mensajes` responden 422." }
+      "pasos": { "4": "Teléfono fuera de patrón, campos de más o un `destino` desconocido en `/mensajes` responden 422.", "5": "Body fuera de rango o con campos de más, y dos reglas que necesitan el catálogo: `plato_inexistente` y `plato_repetido`." }
     },
     "iso8601": {
       "tipo": "norma", "titulo": "ISO 8601 / RFC 3339: fechas y horas",
@@ -270,11 +273,17 @@
       "que": "Plan internacional de numeración telefónica: como máximo 15 dígitos, con el código de país adelante.",
       "pasos": { "4": "El patrón `^\\+?\\d{8,15}$` toma de E.164 el máximo de 15 dígitos." }
     },
+    "iso6709": {
+      "tipo": "norma", "titulo": "ISO 6709: coordenadas geográficas",
+      "ref": "ISO 6709 (con el datum WGS 84)",
+      "que": "Representación estándar de un punto geográfico: latitud entre -90 y 90 grados y longitud entre -180 y 180, en grados decimales.",
+      "pasos": { "5": "`lat` en [-90, 90] y `lng` en [-180, 180]; los bordes son válidos y ±0,1 más allá da 422." }
+    },
     "validacion-entrada": {
       "tipo": "bp", "titulo": "Validación de entrada por lista blanca",
       "ref": "OWASP Input Validation Cheat Sheet",
       "que": "Aceptar solo lo que se sabe válido (lista blanca) y rechazar todo lo demás en la frontera del sistema, antes de que llegue a la lógica.",
-      "pasos": { "4": "Los modelos Pydantic usan `extra=\"forbid\"`: un cliente que manda `\"estado\": \"PAGADO\"` al crear el pedido recibe 422." }
+      "pasos": { "4": "Los modelos Pydantic usan `extra=\"forbid\"`: un cliente que manda `\"estado\": \"PAGADO\"` al crear el pedido recibe 422.", "5": "`extra=\"forbid\"` rechaza `total`, `estado` o `descuento`; la dirección tiene un patrón que no admite espacios en los extremos." }
     },
     "doble-prueba": {
       "tipo": "bp", "titulo": "Doble de prueba (fake)",

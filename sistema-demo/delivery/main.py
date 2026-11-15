@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from delivery import catalogo, db, rutas_pedidos
 from delivery.config import Config
 from delivery.estados import TransicionInvalida
-from delivery.pedidos import PedidoNoEncontrado
+from delivery.pedidos import DatosInvalidos, PedidoNoEncontrado
 
 
 def crear_app(cfg: Config | None = None) -> FastAPI:
@@ -37,6 +37,10 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
     @app.exception_handler(PedidoNoEncontrado)
     def _404(request: Request, exc: PedidoNoEncontrado) -> JSONResponse:
         return JSONResponse(status_code=404, content={"detail": {"error": "pedido_no_encontrado"}})
+
+    @app.exception_handler(DatosInvalidos)
+    def _422(request: Request, exc: DatosInvalidos) -> JSONResponse:
+        return JSONResponse(status_code=422, content={"detail": {"error": exc.error}})
 
     @app.exception_handler(TransicionInvalida)
     def _409(request: Request, exc: TransicionInvalida) -> JSONResponse:

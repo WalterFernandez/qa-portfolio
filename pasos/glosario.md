@@ -41,15 +41,15 @@ Qué significa cada etiqueta usada en los pasos. Es la misma información del mo
 
 ### Dónde lo aplicamos en este proyecto
 
-- TDD y *shift-left*: pasos 1 a 4, el test se escribe antes que el código.
+- TDD y *shift-left*: pasos 1 a 5, el test se escribe antes que el código.
 - *Smoke test*: `GET /salud` (paso 1).
 - Gestión de la configuración: versiones fijas y `.gitignore` (paso 1).
-- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3).
-- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4).
+- Pruebas basadas en riesgos: el precio lo fija el servidor (paso 2); no se cancela después de pagar (paso 3); el cliente no puede mandar su propio total (paso 5).
+- Transición de estados, con cobertura de transiciones válidas y de todas las transiciones: máquina de estados del pedido (paso 3); el alta recorre `INICIADO → LINK_ENVIADO` por `_avanzar` (paso 4); la carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO` y cargar dos veces da 409 (paso 5).
 - Prueba de componente (nivel unitario, sin HTTP ni base): paso 3.
-- Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): paso 4.
-- Partición de equivalencia y valores límite: el teléfono (paso 4).
-- Próximamente: valores límite en cantidades y coordenadas (paso 5), defectos sembrados (paso 8).
+- Prueba de integración de componentes (ruta, servicio, SQLite y bandeja juntos): pasos 4 y 5.
+- Partición de equivalencia y valores límite: el teléfono (paso 4); cantidad, items, dirección, coordenadas y los tramos de la demora (paso 5).
+- Próximamente: defectos sembrados (paso 8).
 
 *Fuente: ISTQB® Certified Tester Foundation Level Syllabus v4.0 (2023). Este proyecto aplica sus prácticas; no implica una certificación.*
 
@@ -80,11 +80,12 @@ Una **norma** es un documento formal, publicado por un organismo reconocido, que
 
 ### Dónde lo aplicamos en este proyecto
 
-- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4).
+- ISO/IEC 25010: capacidad de ser probado (paso 1), integridad y fiabilidad de los datos (paso 2), corrección y completitud funcional de las transiciones (paso 3), capacidad de recuperación tras un reinicio (paso 4), integridad: un rechazo no deja datos a medias (paso 5).
 - UML 2.5 (ISO/IEC 19505): diagrama de máquina de estados del pedido (paso 3).
-- RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4).
+- RFC 9110: `GET` solo lee (paso 2); códigos 404, 409 y 422 (paso 4); 409 al cargar dos veces y 422 con `plato_repetido` y `plato_inexistente` (paso 5).
 - ISO 8601 / RFC 3339: marcas de tiempo en UTC con `Z` (paso 4).
 - ITU-T E.164: máximo de 15 dígitos en el teléfono (paso 4).
+- ISO 6709: latitud en [-90, 90] y longitud en [-180, 180] (paso 5).
 - OpenAPI 3.1: documentación automática en `/docs` (paso 1). En la etapa 2, contrato JSON Schema.
 - ISO/IEC/IEEE 29119-3: plan, casos e informes de incidentes (etapa 2).
 
@@ -121,6 +122,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - Paso 2: OWASP (SQL parametrizado), 3FN, Unit of Work, inyección de dependencias, siembra idempotente, dinero en enteros.
 - Paso 3: fuente única de verdad y diseño *table-driven*, tests parametrizados, *fail fast*, prueba de mutación manual.
 - Paso 4: validación de entrada por lista blanca (OWASP), un solo camino para cambiar el estado, doble de prueba (*fake*) para el WhatsApp, reloj reemplazable, prueba de mutación (3 de 3).
+- Paso 5: el total lo calcula el servidor con el catálogo (fuente única), lista blanca contra `total`, dinero en enteros, validar todo antes de escribir (*fail fast*) en una sola transacción, prueba de mutación (6 de 6, con un caso sumado por una sobreviviente).
 
 ---
 
@@ -145,6 +147,7 @@ El syllabus no impone herramientas ni patrones de código, pero muchas buenas pr
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Los tests del catálogo fallaron con 404 en `/platos` antes de crear la base y la ruta.
 - [Paso 3](paso-03-maquina-de-estados.md): `test_estados.py` falló porque no existía `delivery.estados`; después se escribió la máquina de estados.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los 19 tests nuevos fallaron con 404 (no existían las rutas) e `ImportError` (no existía `pedidos.py`) antes de escribir el código.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 41 tests de cotización escritos antes que `cargar_datos`: fallaron con 405 porque la ruta `PUT` no existía.
 
 <a id="smoke-test"></a>
 
@@ -206,6 +209,7 @@ Priorizar qué probar según la probabilidad y el impacto de que algo salga mal.
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Riesgo: cobro incorrecto. Mitigación: el precio lo fija el servidor y se guarda en enteros.
 - [Paso 3](paso-03-maquina-de-estados.md): Riesgo: cancelar con el pago hecho y el delivery asignado. Mitigación: cancelar solo es posible en los 4 estados previos al pago.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Riesgo: que el cliente fije su propio precio. Mitigación: el body no tiene `total` (mandarlo da 422) y el total sale de los precios del catálogo.
 
 <a id="regresion"></a>
 
@@ -231,6 +235,7 @@ Técnica de caja negra: se modela el sistema como estados y transiciones (diagra
 
 - [Paso 3](paso-03-maquina-de-estados.md): Diagrama de 13 estados y tabla `TRANSICIONES`; 18 casos válidos y 6 inválidos con nombre (salto, retroceso, cancelar después de pagar…).
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Al crear el pedido se recorre `INICIADO → LINK_ENVIADO` por `_avanzar`; un salto a `PAGADO` se rechaza y no deja evento.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): La carga recorre `LINK_ENVIADO → DATOS_CARGADOS → COTIZADO`; cargar dos veces choca con `COTIZADO` y da 409.
 
 <a id="cobertura-transiciones"></a>
 
@@ -267,6 +272,7 @@ Técnica de caja negra: se dividen los datos en grupos que el sistema debería t
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono: un grupo válido (8 a 15 dígitos, con `+` opcional) y grupos inválidos (vacío, con letras, muy corto, muy largo).
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cantidad (menor a 1, de 1 a 10, mayor a 10), cantidad de items (0, 1 a 4, más de 4), dirección (vacía, con espacios en los extremos, válida, demasiado larga) y la demora en tres tramos: hasta 2 unidades, de 3 a 7 y de 8 en adelante.
 
 <a id="valores-limite"></a>
 
@@ -279,6 +285,7 @@ Los defectos se concentran en los bordes de cada partición. Con 2 valores por b
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Bordes del teléfono: 8 y 15 dígitos dan 201; 7 y 16 dan 422.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cantidad 0, 1, 10 y 11; items 0, 1, 4 y 5; dirección de 1, 200 y 201 caracteres; latitud ±90 y ±90,1; longitud ±180 y ±180,1; demora en 2|3 unidades (empieza el recargo) y 7|8 (llega al tope de 60).
 
 <a id="integracion-componentes"></a>
 
@@ -291,6 +298,7 @@ Segundo nivel de prueba: se verifica que varias piezas funcionen juntas a travé
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Con `TestClient` cada test cruza ruta → servicio → SQLite → bandeja de mensajes, sin levantar un servidor real.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `PUT /pedidos/{id}` prueba juntos el modelo Pydantic, el servicio, el catálogo, SQLite y la bandeja de mensajes.
 
 ### 📐 Normas
 
@@ -341,6 +349,7 @@ El sistema impide modificaciones indebidas de los datos.
 **En este proyecto:**
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Restricciones en la base: `CHECK (precio > 0)`, `FOREIGN KEY` y `PRIMARY KEY (pedido_id, plato_id)`.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Un 422 o un 409 no dejan nada a medias: se valida todo antes de escribir, y la PK `(pedido_id, plato_id)` nunca llega a dar un error 500.
 
 <a id="recuperabilidad"></a>
 
@@ -415,6 +424,7 @@ El pedido no se puede completar porque choca con el estado actual del recurso.
 
 - [Paso 3](paso-03-maquina-de-estados.md): `TransicionInvalida` lleva el estado actual y el destino; en el Paso 4 se traduce en un 409 con esos datos.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): El manejador de `main.py` traduce `TransicionInvalida` en 409 con `estado_actual` y `destino`; un test lo verifica.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cargar datos de un pedido ya cotizado: `estado_actual` `COTIZADO`, `destino` `DATOS_CARGADOS`.
 
 <a id="http-404"></a>
 
@@ -439,6 +449,7 @@ El cuerpo tiene un formato válido (JSON) pero su contenido no se puede procesar
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Teléfono fuera de patrón, campos de más o un `destino` desconocido en `/mensajes` responden 422.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Body fuera de rango o con campos de más, y dos reglas que necesitan el catálogo: `plato_inexistente` y `plato_repetido`.
 
 <a id="iso8601"></a>
 
@@ -463,6 +474,18 @@ Plan internacional de numeración telefónica: como máximo 15 dígitos, con el 
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): El patrón `^\+?\d{8,15}$` toma de E.164 el máximo de 15 dígitos.
+
+<a id="iso6709"></a>
+
+#### ISO 6709: coordenadas geográficas
+
+📐 Norma · **Referencia:** ISO 6709 (con el datum WGS 84)
+
+Representación estándar de un punto geográfico: latitud entre -90 y 90 grados y longitud entre -180 y 180, en grados decimales.
+
+**En este proyecto:**
+
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `lat` en [-90, 90] y `lng` en [-180, 180]; los bordes son válidos y ±0,1 más allá da 422.
 
 ### ✅ Buenas prácticas
 
@@ -562,6 +585,7 @@ Todos los cambios de una operación se guardan juntos o no se guarda ninguno.
 **En este proyecto:**
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): `obtener_ctx` abre una conexión por request: *commit* si todo sale bien, *rollback* si algo falla.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): La carga escribe items, dirección, total, dos eventos y un mensaje en una sola transacción.
 
 <a id="inyeccion-dependencias"></a>
 
@@ -598,6 +622,7 @@ Los `float` tienen errores de redondeo (`0.1 + 0.2 = 0.30000000000000004`). Con 
 **En este proyecto:**
 
 - [Paso 2](paso-02-base-de-datos-y-catalogo.md): Los precios son `int` en pesos y un test verifica el tipo.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): El total es la suma de `cantidad × precio_unitario` en pesos enteros: `2 × 9000 + 4500 = 22500`.
 
 <a id="table-driven"></a>
 
@@ -611,6 +636,7 @@ Las reglas se escriben como datos (una tabla) en un solo lugar, no repartidas en
 
 - [Paso 3](paso-03-maquina-de-estados.md): `TRANSICIONES` es un diccionario; toda mutación de estado pasará por `validar_transicion`.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `pedidos._avanzar` es el único camino para cambiar el estado: valida, actualiza y registra el evento.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): El precio sale siempre del catálogo (`catalogo.precios`) y queda guardado en `precio_unitario`; el cliente no manda montos.
 
 <a id="parametrizados"></a>
 
@@ -624,6 +650,7 @@ Un mismo test se ejecuta con muchos datos, y cada combinación aparece como un c
 
 - [Paso 3](paso-03-maquina-de-estados.md): Un test recorre las 18 válidas y otro las 6 inválidas, cada una con su nombre (`salto`, `retroceso`…).
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los teléfonos válidos e inválidos tienen nombre propio: `limite-8-digitos`, `16-digitos`, `con-letras`…
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): Cada valor límite es un caso con nombre (`3-unidades-primer-recargo`, `201-caracteres`, `mismos-platos`).
 
 <a id="fail-fast"></a>
 
@@ -637,6 +664,7 @@ Ante una operación inválida, fallar enseguida con un error que diga qué pasó
 
 - [Paso 3](paso-03-maquina-de-estados.md): `TransicionInvalida(actual, destino)`: el error dice exactamente qué cambio se intentó.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): `PedidoNoEncontrado` y `TransicionInvalida` se traducen a HTTP en un solo lugar (`main.py`), nunca un 500.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `cargar_datos` valida estado, repetidos y platos antes del primer `INSERT`; cada rechazo trae su código (`plato_repetido`, `plato_inexistente`).
 
 <a id="mutacion"></a>
 
@@ -650,6 +678,7 @@ Se cambia el código a propósito (una *mutación*) y se verifica que algún tes
 
 - [Paso 3](paso-03-maquina-de-estados.md): Se agregó la flecha prohibida `EN_PUERTA → CERRADO`: 2 tests fallaron. Después se revirtió.
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): 3 mutantes, los 3 detectados: sacar `validar_transicion`, aceptar campos de más y subir el límite a 16 dígitos.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): 6 de 6 detectadas. La primera vez sobrevivió una (sacar el chequeo temprano de estado) y eso llevó a un caso nuevo: cargar dos veces con los mismos platos.
 
 <a id="validacion-entrada"></a>
 
@@ -662,6 +691,7 @@ Aceptar solo lo que se sabe válido (lista blanca) y rechazar todo lo demás en 
 **En este proyecto:**
 
 - [Paso 4](paso-04-crear-pedido-y-mensajes.md): Los modelos Pydantic usan `extra="forbid"`: un cliente que manda `"estado": "PAGADO"` al crear el pedido recibe 422.
+- [Paso 5](paso-05-cargar-datos-y-cotizacion.md): `extra="forbid"` rechaza `total`, `estado` o `descuento`; la dirección tiene un patrón que no admite espacios en los extremos.
 
 <a id="doble-prueba"></a>
 

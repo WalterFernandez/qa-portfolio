@@ -193,7 +193,7 @@ def test_timestamps_en_utc_con_z(cliente):
   - `PUT /pedidos/{id}` body `{"items": [{"plato_id": int, "cantidad": int}], "direccion": str, "lat": float | None, "lng": float | None}`.
   - Validación (422): `items` con 1 a 4 elementos; `cantidad` entre **1 y 10**; `plato_id` existente (`{"error": "plato_inexistente"}`); plato repetido (`{"error": "plato_repetido"}`); `direccion` sin espacios en los extremos de 1 a 200 caracteres; `lat` en [-90, 90] y `lng` en [-180, 180]; cualquier campo extra (por ejemplo `total`).
 
-- [ ] **Step 1: Tests que fallan**
+- [x] **Step 1: Tests que fallan**
 
 ```python
 def test_total_lo_calcula_el_servidor(cliente, pedido_nuevo):
@@ -220,10 +220,10 @@ def test_demora_tiene_tope_de_60(cliente, pedido_nuevo): ...  # 4 platos x 10 un
 ```
 
   Agregar a `conftest.py` la fixture `pedido_nuevo` (id de un pedido en `LINK_ENVIADO`) y la constante `DATOS_OK`.
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar `cargar_datos` y la ruta `PUT`.
-- [ ] **Step 4:** Correr la suite → PASS.
-- [ ] **Step 5: Commit** `feat(demo): carga de datos y cotización calculada en el servidor`
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar `cargar_datos` y la ruta `PUT`.
+- [x] **Step 4:** Correr la suite → PASS.
+- [x] **Step 5: Commit** `feat(demo): carga de datos y cotización calculada en el servidor`
 
 ### Task 6: Firma, pago idempotente y asignación al delivery (pasos 6–7)
 

@@ -4,7 +4,7 @@ Toda mutación de estado pasa por `_avanzar`, que valida la transición contra l
 máquina de estados y deja un evento con su marca de tiempo.
 """
 
-from delivery import mensajes, reloj
+from delivery import catalogo, mensajes, reloj
 from delivery.db import Ctx
 from delivery.estados import Estado, validar_transicion
 
@@ -13,6 +13,25 @@ class PedidoNoEncontrado(Exception):
     def __init__(self, pedido_id: int) -> None:
         super().__init__(f"No existe el pedido {pedido_id}")
         self.pedido_id = pedido_id
+
+
+class DatosInvalidos(Exception):
+    """Regla de negocio que Pydantic no puede chequear sola (necesita el catálogo)."""
+
+    def __init__(self, error: str) -> None:
+        super().__init__(error)
+        self.error = error
+
+
+DEMORA_BASE_MIN = 30
+DEMORA_TOPE_MIN = 60
+UNIDADES_SIN_RECARGO = 2
+RECARGO_POR_UNIDAD_MIN = 5
+
+
+def calcular_demora(unidades: int) -> int:
+    recargo = RECARGO_POR_UNIDAD_MIN * max(0, unidades - UNIDADES_SIN_RECARGO)
+    return min(DEMORA_TOPE_MIN, DEMORA_BASE_MIN + recargo)
 
 
 def _fila(ctx: Ctx, pedido_id: int):
@@ -52,6 +71,53 @@ def crear_pedido(ctx: Ctx, telefono: str) -> int:
     )
     _avanzar(ctx, pedido_id, Estado.LINK_ENVIADO, "servicio")
     return pedido_id
+
+
+def cargar_datos(
+    ctx: Ctx,
+    pedido_id: int,
+    items: list[tuple[int, int]],
+    direccion: str,
+    lat: float | None,
+    lng: float | None,
+) -> None:
+    """Paso 4 (el cliente carga sus datos) y paso 5 (el servicio cotiza), en la misma llamada.
+
+    Todo se valida ANTES de escribir: si algo falla no queda nada a medias.
+    El precio sale siempre del catálogo; el cliente nunca manda montos.
+    """
+    fila = _fila(ctx, pedido_id)
+    validar_transicion(Estado(fila["estado"]), Estado.DATOS_CARGADOS)
+
+    ids = [plato_id for plato_id, _ in items]
+    if len(set(ids)) != len(ids):
+        raise DatosInvalidos("plato_repetido")
+    precios = catalogo.precios(ctx)
+    if any(plato_id not in precios for plato_id in ids):
+        raise DatosInvalidos("plato_inexistente")
+
+    ctx.con.executemany(
+        "INSERT INTO pedido_items (pedido_id, plato_id, cantidad, precio_unitario)"
+        " VALUES (?, ?, ?, ?)",
+        [(pedido_id, plato_id, cantidad, precios[plato_id]) for plato_id, cantidad in items],
+    )
+    ctx.con.execute(
+        "UPDATE pedidos SET direccion = ?, lat = ?, lng = ? WHERE id = ?",
+        (direccion, lat, lng, pedido_id),
+    )
+    _avanzar(ctx, pedido_id, Estado.DATOS_CARGADOS, "cliente")
+
+    total = sum(cantidad * precios[plato_id] for plato_id, cantidad in items)
+    demora_min = calcular_demora(sum(cantidad for _, cantidad in items))
+    ctx.con.execute(
+        "UPDATE pedidos SET total = ?, demora_min = ? WHERE id = ?",
+        (total, demora_min, pedido_id),
+    )
+    mensajes.enviar(
+        ctx, pedido_id, "cliente", fila["telefono"],
+        f"Total ${total} - demora {demora_min} min", None,
+    )
+    _avanzar(ctx, pedido_id, Estado.COTIZADO, "servicio")
 
 
 def _items(ctx: Ctx, pedido_id: int) -> list[dict]:
